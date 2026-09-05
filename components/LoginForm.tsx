@@ -5,10 +5,15 @@ import { useState } from "react";
 export default function LoginForm() {
     const [employeeId, setEmployeeId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const [companycode, setCompanycode] = useState<string>('')
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        if(!companycode.trim()) {
+            alert('회사일련번호를 입력하세요.');
+            return;
+        }
         if(!employeeId.trim()) {
             alert('사원번호를 입력하세요.');
             return;
@@ -19,7 +24,7 @@ export default function LoginForm() {
             return;
         }
 
-        console.log({employeeId, password});
+        console.log({companycode, employeeId, password});
     };
 
     return (
@@ -29,6 +34,15 @@ export default function LoginForm() {
             </h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+
+                <div>
+                    <input type="text" 
+                    placeholder="회사일련번호"
+                    value={companycode}
+                    onChange={(e) => setCompanycode(e.target.value)}
+                    className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
+                </div>
+
                 <div>
                     <input type="text"
                      placeholder="사원 번호"
@@ -51,10 +65,10 @@ export default function LoginForm() {
             </form>
 
             <div className="flex justify-between items-center mt-10 text-sm text-white/90 px-1">
-                <button type="button" onClick={() => console.log('회원가입 클릭')} className="hover:underline focus:outline-none">
+                <button type="button" onClick={() => console.log('회원가입 클릭')} className="hover:underline focus:outline-none cursor-pointer">
                     회원가입
                 </button>
-                <button type="button" onClick={() => console.log('비밀번호 찾기 클릭')} className="hover:underline focus:outline-none">
+                <button type="button" onClick={() => console.log('비밀번호 찾기 클릭')} className="hover:underline focus:outline-none cursor-pointer">
                     비밀번호 찾기
                 </button>
             </div>
