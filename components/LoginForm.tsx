@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
+    const router = useRouter();
     const [employeeId, setEmployeeId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [companycode, setCompanycode] = useState<string>('')
@@ -59,15 +61,16 @@ export default function LoginForm() {
                      className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
                 </div>
                 <button type="submit"
-                className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm">
+                    className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm">
                     로그인
                 </button>
             </form>
 
             <div className="flex justify-between items-center mt-10 text-sm text-white/90 px-1">
-                <button type="button" onClick={() => console.log('회원가입 클릭')} className="hover:underline focus:outline-none cursor-pointer">
+                <button type="button" onClick={() => router.push('/register')} className="hover:underline focus:outline-none cursor-pointer">
                     회원가입
                 </button>
+                
                 <button type="button" onClick={() => console.log('비밀번호 찾기 클릭')} className="hover:underline focus:outline-none cursor-pointer">
                     비밀번호 찾기
                 </button>
