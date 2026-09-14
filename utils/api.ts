@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 1. 기본 API 인스턴스 생성
 export const api = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://43.200.89.191',
     withCredentials: true, // 🚨 쿠키(Refresh Token)를 백엔드로 보내기 위해 절대적으로 필수인 옵션
 });
 
@@ -27,7 +27,7 @@ api.interceptors.response.use(
 
             try {
                 // 뒤에서 조용히 재발급 API 호출 (이때 HttpOnly 쿠키가 자동으로 넘어감)
-                const refreshResponse = await axios.post('http://localhost:8080/api/v1/jwt/refresh', {}, {
+                const refreshResponse = await api.post('/api/v1/jwt/refresh', {}, {
                     withCredentials: true 
                 });
 

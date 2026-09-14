@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 // 방금 만든 utils 폴더의 api 모듈을 불러옵니다.
 import { api } from '../utils/api';
+import axios from 'axios';
 
 interface UserInfo {
     companyId: number;
@@ -25,7 +26,12 @@ export default function UserProfile() {
                 const response = await api.get('/api/v1/users/me');
                 setUserInfo(response.data);
             } catch (error) {
-                console.error("통신 에러가 발생했습니다.", error);
+                if(axios.isAxiosError(error)){
+                    console.error("통신 에러가 발생했습니다.", error.response?.data);
+                }
+                else{
+                    console.error("Unknown error: ", error);
+                }
             }
         };
 
