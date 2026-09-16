@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 1. 기본 API 인스턴스 생성
 export const api = axios.create({
-    baseURL: 'http://43.200.89.191',
+    // baseURL: 'http://43.200.89.191',
     withCredentials: true, // 🚨 쿠키(Refresh Token)를 백엔드로 보내기 위해 절대적으로 필수인 옵션
 });
 
