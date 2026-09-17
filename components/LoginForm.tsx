@@ -71,8 +71,8 @@ export default function LoginForm() {
                     회원가입
                 </button>
                 
-                <button type="button" onClick={() => console.log('비밀번호 찾기 클릭')} className="hover:underline focus:outline-none cursor-pointer">
-                    비밀번호 찾기
+                <button type="button" onClick={() => router.push('/reset-password')} className="hover:underline focus:outline-none cursor-pointer">
+                    비밀번호 설정
                 </button>
             </div>
         </div>

@@ -2,69 +2,73 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SignUpSuccess from "./SignUpSuccess";
 
-export default function RegisterForm(){
+export default function RegisterForm() {
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const router = useRouter();
+
     const [formData, setFormData] = useState({
-        employeeId:'',
-        password:'',
-        confirmPassword:'',
-        name:'',
-        companyEmail:'',
-        companyCode:''
+        employeeId: '',
+        password: '',
+        confirmPassword: '',
+        name: '',
+        companyEmail: '',
+        companyCode: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const {name, value} = e.target;
+        const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
             [name]: value,
         }));
-    }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if(!formData.companyCode.trim()) {
+        if (!formData.companyCode.trim()) {
             alert('회사일련번호를 입력하세요.');
             return;
         }
-        if(!formData.employeeId.trim()) {
+        if (!formData.employeeId.trim()) {
             alert('사원번호를 입력하세요.');
             return;
         }
-
-        if(!formData.password.trim()) {
+        if (!formData.password.trim()) {
             alert('비밀번호를 입력하세요.');
             return;
         }
-
-        if(!formData.companyEmail.trim()) {
-            alert('이메일을 입력하세요.');
+        if (!formData.confirmPassword.trim()) {
+            alert('비밀번호 재입력을 입력하세요.');
             return;
         }
-
-        if(!formData.name.trim()) {
-            alert('이름을 입력하세요.');
-            return;
-        }
-
-        if(!formData.confirmPassword.trim()) {
-            alert('비밀번호를 입력하세요.');
-            return;
-        }
-
         if (formData.password !== formData.confirmPassword) {
             alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-        console.log('회원가입 정보: ', formData);
-    }
+        if (!formData.name.trim()) {
+            alert('이름을 입력하세요.');
+            return;
+        }
+        if (!formData.companyEmail.trim()) {
+            alert('이메일을 입력하세요.');
+            return;
+        }
 
-    const handleCancel = (e: React.MouseEvent<HTMLElement>) => {
+        console.log('회원가입 정보: ', formData);
+
+        setIsSubmitted(true);
+    };
+
+    const handleCancel = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        window.location.href='/';
-        
+        router.push('/');
+    };
+
+    if (isSubmitted) {
+        return <SignUpSuccess />;
     }
 
     return (
@@ -172,5 +176,5 @@ export default function RegisterForm(){
                 </form>
             </div>
         </div>
-    )
+    );
 }
