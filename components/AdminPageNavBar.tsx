@@ -1,17 +1,24 @@
 import { PageType } from "@/types/pageType";
 import Link from "next/link";
 
+/**
+ * 관리자 페이지에 공통으로 들어갈 네비게이션 바.
+ * @param param0 현재 페이지 props.
+ * @returns 네비게이션 바 Element.
+ */
 export default function AdminPageNavBar({ page }: { page: PageType }) {
     return (
         <nav className="flex flex-row">
             <div
+                className="bg-main flex flex-4 items-center justify-center hover:cursor-pointer md:flex-2 xl:flex-1"
                 role="navigation"
                 tabIndex={0}
-                className="hover:cursor-pointer flex-1 text-lg max-md:text-sm p-3 px-5 max-w-32 font-bold bg-main text-white text-center"
             >
-                8PM-MES
+                <p className="text-center align-middle text-lg font-bold text-white max-sm:text-sm">
+                    8PM-MES
+                </p>
             </div>
-            <div className="p-3 px-7 flex flex-row bg-light gap-10 flex-10 justify-start items-center">
+            <div className="bg-light flex flex-10 flex-row items-center justify-start gap-10 p-3 px-7">
                 <Link
                     href="/admin/user"
                     tabIndex={0}

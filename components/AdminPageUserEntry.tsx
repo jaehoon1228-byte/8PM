@@ -18,11 +18,8 @@ export default function AdminPageUserEntry({
     email,
 }: UserData) {
     return (
-        <div
-            key={employeeId}
-            className="border-y-2 border-white flex-row flex justify-between p-3"
-        >
-            <div className="flex flex-row gap-10">
+        <div className="flex flex-row justify-between border-y-2 border-white p-3">
+            <div className="flex flex-row gap-2 md:gap-5">
                 <p>{companyId}</p>
                 <p>{companyName}</p>
                 <p>{employeeId}</p>
@@ -32,7 +29,7 @@ export default function AdminPageUserEntry({
             </div>
             <div
                 tabIndex={0}
-                className="hover:cursor-pointer text-red-700 font-bold"
+                className="font-bold text-red-700 hover:cursor-pointer"
             >
                 삭제
             </div>
