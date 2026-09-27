@@ -6,17 +6,22 @@ import { FileMetadata } from "@/types/fileMetadata";
 import { useFileFilterStore } from "@/providers/fileFilterProvider";
 import { FileType } from "@/types/fileType";
 
+/**
+ * 파일 관리 페이지 컴포넌트.
+ * @returns
+ */
 export default function AdminFilePage() {
+    // TODO: 샘플 데이터 사용 중. 추후 실제 DB에서 값을 가져올 것.
     const files: FileMetadata[] = [
         {
             fileId: crypto.randomUUID(),
             fileName: "test.docx",
             username: "admin",
-            // uploadedAt: new Date(2026, 0, 1, 0, 0, 0),
             uploadedAt: new Temporal.PlainDateTime(2026, 1, 1),
         },
     ];
 
+    // Zustand Store에서 필터 State 사용
     const {
         fileType,
         queryText,
@@ -27,6 +32,9 @@ export default function AdminFilePage() {
         setCreatedAt,
     } = useFileFilterStore((state) => state);
 
+    /**
+     * 각 필터링 요소를 변경합니다.
+     */
     const changeFilter = ({
         fileType,
         queryText,

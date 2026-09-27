@@ -7,6 +7,7 @@ import { isRole, Role } from "@/types/role";
 import { User } from "@/types/user";
 
 export default function AdminUserPage() {
+    // TODO: 샘플 데이터 사용 중. 추후 실제 DB에서 값을 가져올 것.
     const users: User[] = [
         {
             companyId: 0,
@@ -19,6 +20,7 @@ export default function AdminUserPage() {
         },
     ];
 
+    // Zustand Store에서 필터 State 사용
     const {
         queryText,
         role,
@@ -29,6 +31,9 @@ export default function AdminUserPage() {
         setCreatedAt,
     } = useUserFilterStore((state) => state);
 
+    /**
+     * 각 필터링 요소를 변경합니다.
+     */
     const changeFilter = ({
         role,
         queryText,
