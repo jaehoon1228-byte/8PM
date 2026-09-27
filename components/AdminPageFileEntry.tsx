@@ -1,7 +1,7 @@
 type FileData = {
     fileName: string;
     username: string;
-    uploadedAt: Date;
+    uploadedAt: Temporal.PlainDateTime;
 };
 
 export default function AdminPageFileEntry({
@@ -14,7 +14,7 @@ export default function AdminPageFileEntry({
             <div className="flex flex-row gap-10">
                 <p>{fileName}</p>
                 <p>{username}</p>
-                <p>{uploadedAt.toLocaleString()}</p>
+                <p>{uploadedAt.toLocaleString() ?? ""}</p>
             </div>
             <div
                 tabIndex={0}

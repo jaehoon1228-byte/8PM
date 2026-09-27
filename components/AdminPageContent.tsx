@@ -24,7 +24,7 @@ export default function AdminPageContent({
                         className="bg-light flex flex-col gap-3 p-3 md:flex-row md:items-center md:justify-between md:rounded-t-xl"
                         action={() => {}}
                     >
-                        <div className="flex flex-col justify-start gap-5 sm:flex-row md:flex-8">
+                        <div className="flex flex-col items-stretch justify-start gap-5 md:flex-8 md:flex-row">
                             {searchElement}
                         </div>
                     </Form>

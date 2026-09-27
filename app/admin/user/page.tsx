@@ -15,25 +15,36 @@ export default function AdminUserPage() {
             email: "test@example.org",
             role: "ROLE_MANAGER",
             username: "admin",
-            createdAt: new Date("2026-01-01T00:00:00"),
+            createdAt: Temporal.PlainDateTime.from("2026-01-01T00:00:00"),
         },
     ];
 
-    const { queryText, role, setQueryText, setRole } = useUserFilterStore(
-        (state) => state,
-    );
+    const {
+        queryText,
+        role,
+        createdAtStart,
+        createdAtEnd,
+        setQueryText,
+        setRole,
+        setCreatedAt,
+    } = useUserFilterStore((state) => state);
 
     const changeFilter = ({
         role,
         queryText,
+        createdAtStart,
+        createdAtEnd,
     }: {
         role?: Role;
         queryText?: string;
+        createdAtStart?: Temporal.PlainDateTime;
+        createdAtEnd?: Temporal.PlainDateTime;
     }) => {
         if (!role || isRole(role)) {
             setRole(role);
         }
         setQueryText(queryText ?? "");
+        setCreatedAt(createdAtStart, createdAtEnd);
     };
 
     return (
@@ -65,12 +76,88 @@ export default function AdminUserPage() {
                         <option value="ROLE_MANAGER">담당자</option>
                         <option value="ROLE_MASTER">관리자</option>
                     </select>
+                    <div className="flex flex-col gap-1 lg:flex-row">
+                        <div className="flex flex-1 flex-row items-center justify-center gap-1">
+                            <label
+                                htmlFor="createdAtStart"
+                                className="text-xs [writing-mode:vertical-rl]"
+                            >
+                                시작일
+                            </label>
+                            <input
+                                className="flex-12 rounded-2xl border-2 border-white p-3"
+                                type="date"
+                                name="createdAtStart"
+                                id="createdAtStart"
+                                onChange={(e) => {
+                                    try {
+                                        changeFilter({
+                                            createdAtStart:
+                                                Temporal.PlainDateTime.from(
+                                                    e.target.value,
+                                                ),
+                                        });
+                                    } catch (err) {
+                                        if (err instanceof RangeError) {
+                                            changeFilter({
+                                                createdAtStart: undefined,
+                                            });
+                                        } else {
+                                            throw err;
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="flex flex-1 flex-row items-center justify-center gap-1">
+                            <label
+                                htmlFor="createdAtEnd"
+                                className="text-xs [writing-mode:vertical-rl]"
+                            >
+                                종료일
+                            </label>
+                            <input
+                                className="flex-12 rounded-2xl border-2 border-white p-3"
+                                type="date"
+                                name="createdAtEnd"
+                                id="createdAtEnd"
+                                onChange={(e) => {
+                                    try {
+                                        changeFilter({
+                                            createdAtEnd:
+                                                Temporal.PlainDateTime.from(
+                                                    e.target.value,
+                                                ),
+                                        });
+                                    } catch (err) {
+                                        if (err instanceof RangeError) {
+                                            changeFilter({
+                                                createdAtEnd: undefined,
+                                            });
+                                        } else {
+                                            throw err;
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
                 </>
             }
             contentElement={users
                 .filter(
                     (value) =>
                         (!role || value.role == role) &&
+                        (!createdAtStart ||
+                            Temporal.PlainDateTime.compare(
+                                value.createdAt,
+                                createdAtStart,
+                            ) >= 0) &&
+                        (!createdAtEnd ||
+                            Temporal.PlainDateTime.compare(
+                                value.createdAt,
+                                createdAtEnd,
+                            ) <= 0) &&
                         (!queryText ||
                             value.username.includes(queryText) ||
                             String(value.employeeId) == queryText ||
