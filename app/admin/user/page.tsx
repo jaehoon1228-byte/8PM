@@ -3,7 +3,7 @@
 import AdminPageContent from "@/components/AdminPageContent";
 import AdminPageUserEntry from "@/components/AdminPageUserEntry";
 import { useUserFilterStore } from "@/providers/userFilterProvider";
-import { Role } from "@/types/role";
+import { isRole, Role } from "@/types/role";
 import { User } from "@/types/user";
 
 export default function AdminUserPage() {
@@ -15,6 +15,7 @@ export default function AdminUserPage() {
             email: "test@example.org",
             role: "ROLE_MANAGER",
             username: "admin",
+            createdAt: new Date("2026-01-01T00:00:00"),
         },
     ];
 
@@ -29,7 +30,7 @@ export default function AdminUserPage() {
         role?: Role;
         queryText?: string;
     }) => {
-        if (role) {
+        if (!role || isRole(role)) {
             setRole(role);
         }
         setQueryText(queryText ?? "");
@@ -55,10 +56,11 @@ export default function AdminUserPage() {
                         id="role"
                         className="flex-1 rounded-2xl border-2 border-white p-3"
                         value={role}
-                        onChange={(e) =>
-                            changeFilter({ role: e.target.value as Role })
-                        }
+                        onChange={(e) => {
+                            changeFilter({ role: e.target.value as Role });
+                        }}
                     >
+                        <option value="">역할 선택...</option>
                         <option value="ROLE_USER">사용자</option>
                         <option value="ROLE_MANAGER">담당자</option>
                         <option value="ROLE_MASTER">관리자</option>
@@ -68,13 +70,13 @@ export default function AdminUserPage() {
             contentElement={users
                 .filter(
                     (value) =>
-                        value.role == role &&
+                        (!role || value.role == role) &&
                         (!queryText ||
-                            value.username === queryText ||
+                            value.username.includes(queryText) ||
                             String(value.employeeId) == queryText ||
-                            value.companyName === queryText ||
+                            value.companyName.includes(queryText) ||
                             String(value.companyId) == queryText ||
-                            value.email === queryText),
+                            value.email.includes(queryText)),
                 )
                 .map((value) => (
                     <AdminPageUserEntry key={value.employeeId} {...value} />

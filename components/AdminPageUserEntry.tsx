@@ -1,13 +1,5 @@
-import { getRoleName, Role } from "@/types/role";
-
-type UserData = {
-    companyId: number;
-    companyName: string;
-    employeeId: number;
-    username: string;
-    role: Role;
-    email: string;
-};
+import { getRoleName } from "@/types/role";
+import { User } from "@/types/user";
 
 export default function AdminPageUserEntry({
     companyId,
@@ -16,7 +8,8 @@ export default function AdminPageUserEntry({
     username,
     role,
     email,
-}: UserData) {
+    createdAt,
+}: User) {
     return (
         <div className="flex flex-row justify-between border-y-2 border-white p-3">
             <div className="flex flex-row gap-2 md:gap-5">
@@ -26,6 +19,7 @@ export default function AdminPageUserEntry({
                 <p>{username}</p>
                 <p>{getRoleName(role)}</p>
                 <p>{email}</p>
+                <p>{createdAt.toLocaleString()}</p>
             </div>
             <div
                 tabIndex={0}

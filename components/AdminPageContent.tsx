@@ -2,7 +2,6 @@ import Form from "next/form";
 import AdminPageNavBar from "./AdminPageNavBar";
 import { JSX } from "react";
 import { PageType } from "@/types/pageType";
-import { FileType } from "@/types/fileType";
 
 export default function AdminPageContent({
     searchElement,

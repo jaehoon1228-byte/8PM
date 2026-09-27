@@ -1,4 +1,9 @@
-const avaliableRoles = ["ROLE_USER", "ROLE_MANAGER", "ROLE_MASTER"] as const;
+const avaliableRoles = [
+    "",
+    "ROLE_USER",
+    "ROLE_MANAGER",
+    "ROLE_MASTER",
+] as const;
 export type Role = (typeof avaliableRoles)[number];
 
 export function isRole(value: string): value is Role {
@@ -22,9 +27,11 @@ export function getRoleName(role: Role) {
             return "사용자";
         }
         default: {
-            throw new Error(
-                "role은 ROLE_MASTER, ROLE_MANAGER, ROLE_USER 중 하나여야 합니다.",
-            );
+            if (role) {
+                throw new Error(
+                    "role은 ROLE_MASTER, ROLE_MANAGER, ROLE_USER 중 하나여야 합니다.",
+                );
+            }
         }
     }
 }
