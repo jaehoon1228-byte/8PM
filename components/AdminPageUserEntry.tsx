@@ -9,21 +9,22 @@ export default function AdminPageUserEntry({
     role,
     email,
     createdAt,
-}: User) {
+    gridStyle,
+}: User & { gridStyle: string }) {
     return (
-        <div className="flex flex-row justify-between border-y-2 border-white p-3">
-            <div className="flex flex-row gap-2 md:gap-5">
-                <p>{companyId}</p>
-                <p>{companyName}</p>
-                <p>{employeeId}</p>
-                <p>{username}</p>
-                <p>{getRoleName(role)}</p>
-                <p>{email}</p>
-                <p>{createdAt.toLocaleString()}</p>
-            </div>
+        <div
+            className={`${gridStyle} flex flex-9 flex-row justify-between border-y-2 border-white p-3 text-center`}
+        >
+            <p>{companyId}</p>
+            <p>{companyName}</p>
+            <p>{employeeId}</p>
+            <p>{username}</p>
+            <p>{getRoleName(role)}</p>
+            <p>{email}</p>
+            <p>{createdAt.toLocaleString()}</p>
             <div
                 tabIndex={0}
-                className="font-bold text-red-700 hover:cursor-pointer"
+                className="flex-1 font-bold text-red-700 hover:cursor-pointer"
             >
                 삭제
             </div>

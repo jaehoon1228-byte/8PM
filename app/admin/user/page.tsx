@@ -52,6 +52,8 @@ export default function AdminUserPage() {
         setCreatedAt(createdAtStart, createdAtEnd);
     };
 
+    const gridStyle = `grid grid-cols-[1fr_1fr_1fr_1fr_1fr_3fr_3fr_1fr]`;
+
     return (
         <AdminPageContent
             pageType="user"
@@ -149,30 +151,49 @@ export default function AdminUserPage() {
                     </div>
                 </>
             }
-            contentElement={users
-                .filter(
-                    (value) =>
-                        (!role || value.role == role) &&
-                        (!createdAtStart ||
-                            Temporal.PlainDateTime.compare(
-                                value.createdAt,
-                                createdAtStart,
-                            ) >= 0) &&
-                        (!createdAtEnd ||
-                            Temporal.PlainDateTime.compare(
-                                value.createdAt,
-                                createdAtEnd,
-                            ) <= 0) &&
-                        (!queryText ||
-                            value.username.includes(queryText) ||
-                            String(value.employeeId) == queryText ||
-                            value.companyName.includes(queryText) ||
-                            String(value.companyId) == queryText ||
-                            value.email.includes(queryText)),
-                )
-                .map((value) => (
-                    <AdminPageUserEntry key={value.employeeId} {...value} />
-                ))}
+            contentElement={[
+                <div
+                    key="sort"
+                    className={`${gridStyle} bg-light border-t-2 border-white px-3 py-1 text-center font-bold`}
+                >
+                    <div>사번</div>
+                    <div>사명</div>
+                    <div>사원번호</div>
+                    <div>사원명</div>
+                    <div>역할</div>
+                    <div>이메일</div>
+                    <div>가입일</div>
+                    <div>삭제</div>
+                </div>,
+                users
+                    .filter(
+                        (value) =>
+                            (!role || value.role == role) &&
+                            (!createdAtStart ||
+                                Temporal.PlainDateTime.compare(
+                                    value.createdAt,
+                                    createdAtStart,
+                                ) >= 0) &&
+                            (!createdAtEnd ||
+                                Temporal.PlainDateTime.compare(
+                                    value.createdAt,
+                                    createdAtEnd,
+                                ) <= 0) &&
+                            (!queryText ||
+                                value.username.includes(queryText) ||
+                                String(value.employeeId) == queryText ||
+                                value.companyName.includes(queryText) ||
+                                String(value.companyId) == queryText ||
+                                value.email.includes(queryText)),
+                    )
+                    .map((value) => (
+                        <AdminPageUserEntry
+                            key={value.employeeId}
+                            gridStyle={gridStyle}
+                            {...value}
+                        />
+                    )),
+            ]}
         />
     );
 }

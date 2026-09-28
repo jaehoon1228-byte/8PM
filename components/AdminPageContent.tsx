@@ -9,7 +9,7 @@ export default function AdminPageContent({
     pageType,
 }: {
     searchElement: JSX.Element;
-    contentElement: JSX.Element | JSX.Element[];
+    contentElement: React.ReactNode | React.ReactNode[];
     pageType: PageType;
 }) {
     "use client";
