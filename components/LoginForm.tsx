@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ky from "ky";
+import { setRefreshToken } from "@/lib/createHttpOnlyCookie";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -9,8 +11,13 @@ export default function LoginForm() {
     const [password, setPassword] = useState<string>('');
     const [companycode, setCompanycode] = useState<string>('')
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        type LoginResponse = {
+            message: string;
+            refreshToken: string
+        }
 
         if(!companycode.trim()) {
             alert('회사일련번호를 입력하세요.');
@@ -26,7 +33,18 @@ export default function LoginForm() {
             return;
         }
 
+        
         console.log({companycode, employeeId, password});
+        
+        const loginCredentials = {companyId: companycode, employeeId, password};
+        
+        const loginRequest = await ky.post(`http://43.200.89.191/api/v1/login`, {body: JSON.stringify(loginCredentials)});
+        const loginResponse = await loginRequest.json<LoginResponse>();
+        
+        if (loginRequest.ok){
+            await setRefreshToken(loginResponse.refreshToken);
+        }
+        router.push('/dashboard');
     };
 
     return (
@@ -61,7 +79,7 @@ export default function LoginForm() {
                      className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
                 </div>
                 <button type="submit"
-                    className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm">
+                    className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm cursor-pointer">
                     로그인
                 </button>
             </form>
