@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,44 +7,54 @@ import { setRefreshToken } from "@/lib/createHttpOnlyCookie";
 
 export default function LoginForm() {
     const router = useRouter();
-    const [employeeId, setEmployeeId] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [companycode, setCompanycode] = useState<string>('')
+    const [employeeId, setEmployeeId] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [companycode, setCompanycode] = useState<string>("");
+    const [loginFailed, setLoginFailed] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         type LoginResponse = {
             message: string;
-            refreshToken: string
-        }
+            refreshToken: string;
+        };
 
-        if(!companycode.trim()) {
-            alert('회사일련번호를 입력하세요.');
+        if (!companycode.trim()) {
+            alert("회사일련번호를 입력하세요.");
             return;
         }
-        if(!employeeId.trim()) {
-            alert('사원번호를 입력하세요.');
-            return;
-        }
-
-        if(!password.trim()) {
-            alert('비밀번호를 입력하세요.');
+        if (!employeeId.trim()) {
+            alert("사원번호를 입력하세요.");
             return;
         }
 
-        
-        console.log({companycode, employeeId, password});
-        
-        const loginCredentials = {companyId: companycode, employeeId, password};
-        
-        const loginRequest = await ky.post(`http://43.200.89.191/api/v1/login`, {body: JSON.stringify(loginCredentials)});
-        const loginResponse = await loginRequest.json<LoginResponse>();
-        
-        if (loginRequest.ok){
+        if (!password.trim()) {
+            alert("비밀번호를 입력하세요.");
+            return;
+        }
+
+        console.log({ companycode, employeeId, password });
+
+        const loginCredentials = {
+            companyId: companycode,
+            employeeId,
+            password,
+        };
+
+        const loginRequest = await ky.post(
+            `${process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080"}/api/v1/login`,
+            { body: JSON.stringify(loginCredentials), throwHttpErrors: false },
+        );
+
+        if (loginRequest.ok) {
+            setLoginFailed(false);
+            const loginResponse = await loginRequest.json<LoginResponse>();
             await setRefreshToken(loginResponse.refreshToken);
+            router.push("/dashboard");
+        } else if (loginRequest.status === 401) {
+            setLoginFailed(true);
         }
-        router.push('/dashboard');
     };
 
     return (
@@ -53,43 +63,60 @@ export default function LoginForm() {
                 로그인
             </h1>
 
+            {loginFailed && <SignInFailed />}
+
             <form onSubmit={handleSubmit} className="space-y-6">
-
                 <div>
-                    <input type="text" 
-                    placeholder="회사일련번호"
-                    value={companycode}
-                    onChange={(e) => setCompanycode(e.target.value)}
-                    className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
+                    <input
+                        type="text"
+                        placeholder="회사일련번호"
+                        value={companycode}
+                        onChange={(e) => setCompanycode(e.target.value)}
+                        className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"
+                    />
                 </div>
 
                 <div>
-                    <input type="text"
-                     placeholder="사원 번호"
-                     value={employeeId}
-                     onChange={(e) => setEmployeeId(e.target.value)}
-                     className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
+                    <input
+                        type="text"
+                        placeholder="사원 번호"
+                        value={employeeId}
+                        onChange={(e) => setEmployeeId(e.target.value)}
+                        className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"
+                    />
                 </div>
 
                 <div>
-                    <input type="password"
-                     placeholder="비밀번호"
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)} 
-                     className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"/>
+                    <input
+                        type="password"
+                        placeholder="비밀번호"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"
+                    />
                 </div>
-                <button type="submit"
-                    className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm cursor-pointer">
+                <button
+                    type="submit"
+                    className="w-full py-4 bg-white text-[#8d95f7] font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm cursor-pointer"
+                >
                     로그인
                 </button>
             </form>
 
             <div className="flex justify-between items-center mt-10 text-sm text-white/90 px-1">
-                <button type="button" onClick={() => router.push('/register')} className="hover:underline focus:outline-none cursor-pointer">
+                <button
+                    type="button"
+                    onClick={() => router.push("/register")}
+                    className="hover:underline focus:outline-none cursor-pointer"
+                >
                     회원가입
                 </button>
-                
-                <button type="button" onClick={() => router.push('/reset-password')} className="hover:underline focus:outline-none cursor-pointer">
+
+                <button
+                    type="button"
+                    onClick={() => router.push("/reset-password")}
+                    className="hover:underline focus:outline-none cursor-pointer"
+                >
                     비밀번호 설정
                 </button>
             </div>
@@ -97,4 +124,10 @@ export default function LoginForm() {
     );
 }
 
-
+function SignInFailed() {
+    return (
+        <div className="p-5 bg-pink-100 rounded-xl font-bold border-red-400 border-2 text-center mb-5">
+            입력한 정보가 일치하지 않습니다.
+        </div>
+    );
+}
