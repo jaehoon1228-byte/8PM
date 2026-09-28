@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ky from "ky";
-import { setRefreshToken } from "@/lib/createHttpOnlyCookie";
+import { setRefreshToken } from "@/utils/createHttpOnlyCookie";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -28,7 +28,6 @@ export default function LoginForm() {
             alert("사원번호를 입력하세요.");
             return;
         }
-
         if (!password.trim()) {
             alert("비밀번호를 입력하세요.");
             return;

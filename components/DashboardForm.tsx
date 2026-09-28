@@ -1,5 +1,7 @@
 "use client";
 
+import { api } from "@/utils/api";
+import { isHTTPError } from "ky";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
@@ -16,6 +18,15 @@ interface ChatSession {
     messages: Message[];
 }
 
+interface UserInfo {
+    companyId: number;
+    companyName: number;
+    employeeId: number;
+    username: string;
+    email: string;
+    role: string;
+}
+
 export default function DashboardForm() {
     const router = useRouter();
     const [input, setInput] = useState("");
@@ -26,6 +37,29 @@ export default function DashboardForm() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const currentChat = chatSessions.find((chat) => chat.id === activeChatId);
 
+    const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            try {
+                const request = await api.get("/api/v1/users/me");
+                const response = await request.json<UserInfo>();
+                setUserInfo(response);
+            } catch (error) {
+                if (isHTTPError(error)) {
+                    console.error(
+                        "통신 에러가 발생했습니다.",
+                        error.message,
+                    );
+                } else {
+                    console.error("Unknown error: ", error);
+                }
+            }
+        };
+
+        fetchMyInfo();
+    }, []);
+
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
@@ -33,8 +67,14 @@ export default function DashboardForm() {
         }
     }, [input]);
 
-    const handleLogout = () => {
-        router.push("/login");
+    const handleLogout = async () => {
+        try {
+            await api.post("/api/v1/logout");
+        } catch (error) {
+            console.error("로그아웃 실패:", error);
+        } finally {
+            router.push("/");
+        }
     };
 
     const handleNewChat = () => {
@@ -150,7 +190,7 @@ export default function DashboardForm() {
                 {!currentChat ? (
                     <div className="flex-1 flex items-center justify-center">
                         <h1 className="text-white text-4xl font-bold tracking-wide">
-                            회사명
+                            {userInfo?.companyName}
                         </h1>
                     </div>
                 ) : (
@@ -165,7 +205,7 @@ export default function DashboardForm() {
                                 }`}
                             >
                                 <div
-                                    className={`max-w-md px-5 py-3 rounded-2xl text-sm whitespace-pre-wrap break-words ${
+                                    className={`max-w-md px-5 py-3 rounded-2xl text-sm whitespace-pre-wrap wrap-break-word ${
                                         msg.sender === "user"
                                             ? "bg-indigo-600 text-white rounded-br-none shadow-md"
                                             : "bg-white text-gray-800 rounded-bl-none shadow-md"
@@ -218,10 +258,10 @@ export default function DashboardForm() {
                     <div className="flex justify-between items-start mb-6">
                         <div>
                             <p className="text-black font-medium text-base">
-                                OOO님 환영합니다.
+                                {userInfo?.username}님 환영합니다.
                             </p>
                             <p className="text-black/80 text-xs mt-1">
-                                사원번호 : OOOOOOOO
+                                사원번호 : {userInfo?.employeeId}
                             </p>
                         </div>
                         <div className="w-8 h-8 bg-white/80 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors" />
