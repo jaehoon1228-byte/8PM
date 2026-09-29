@@ -5,6 +5,10 @@ import AdminPageContent from "@/components/AdminPageContent";
 import { FileMetadata } from "@/types/fileMetadata";
 import { useFileFilterStore } from "@/providers/fileFilterProvider";
 import { FileType } from "@/types/fileType";
+import AdminPageTableHeader from "@/components/AdminPageTableHeader";
+import { adminPageUserColumns } from "@/types/adminPageUserColumns";
+import { UserOrderBy } from "@/types/user";
+import { useState } from "react";
 
 /**
  * 파일 관리 페이지 컴포넌트.
@@ -54,6 +58,20 @@ export default function AdminFilePage() {
         setQueryText(queryText ?? "");
         setCreatedAt(createdAtStart, createdAtEnd);
     };
+
+    const setSort = (newIsDesc?: boolean, newOrderBy?: UserOrderBy) => {
+        if (newOrderBy) {
+            setOrderBy(newOrderBy);
+        }
+        if (newIsDesc !== undefined && newOrderBy === orderBy) {
+            setIsDesc(newIsDesc);
+        }
+    };
+
+    const [isDesc, setIsDesc] = useState(false);
+    const [orderBy, setOrderBy] = useState<UserOrderBy>("companyId");
+
+    const gridStyle = `grid grid-cols-[1fr_1fr_1fr_1fr_1fr_3fr_3fr_1fr]`;
 
     return (
         <AdminPageContent
@@ -187,6 +205,21 @@ export default function AdminFilePage() {
                 .map((value) => (
                     <AdminPageFileEntry key={value.fileId} {...value} />
                 ))}
+            sortElement={
+                <div
+                    className={`${gridStyle} bg-light border-t-2 border-white px-3 py-1`}
+                >
+                    {adminPageUserColumns.map((value) => (
+                        <AdminPageTableHeader
+                            key={value.name}
+                            headerData={value}
+                            isDesc={isDesc}
+                            orderBy={orderBy}
+                            setSort={setSort}
+                        />
+                    ))}
+                </div>
+            }
         />
     );
 }

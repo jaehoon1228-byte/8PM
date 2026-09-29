@@ -1,19 +1,19 @@
+"use client";
 import Form from "next/form";
 import AdminPageNavBar from "./AdminPageNavBar";
-import { JSX } from "react";
 import { PageType } from "@/types/pageType";
 
 export default function AdminPageContent({
     searchElement,
     contentElement,
+    sortElement,
     pageType,
 }: {
-    searchElement: JSX.Element;
-    contentElement: React.ReactNode | React.ReactNode[];
+    searchElement: React.ReactNode;
+    contentElement: React.ReactNode;
+    sortElement: React.ReactNode;
     pageType: PageType;
 }) {
-    "use client";
-
     return (
         <div className="font-admin flex h-dvh flex-col">
             <AdminPageNavBar page={pageType} />
@@ -28,6 +28,7 @@ export default function AdminPageContent({
                             {searchElement}
                         </div>
                     </Form>
+                    {sortElement}
                     <div className="w-full overflow-y-scroll">
                         {contentElement}
                     </div>

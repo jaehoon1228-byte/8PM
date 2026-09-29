@@ -1,10 +1,13 @@
 "use client";
 
 import AdminPageContent from "@/components/AdminPageContent";
+import AdminPageTableHeader from "@/components/AdminPageTableHeader";
 import AdminPageUserEntry from "@/components/AdminPageUserEntry";
 import { useUserFilterStore } from "@/providers/userFilterProvider";
+import { adminPageUserColumns } from "@/types/adminPageUserColumns";
 import { isRole, Role } from "@/types/role";
-import { User } from "@/types/user";
+import User, { UserOrderBy } from "@/types/user";
+import { useState } from "react";
 
 export default function AdminUserPage() {
     // TODO: 샘플 데이터 사용 중. 추후 실제 DB에서 값을 가져올 것.
@@ -14,9 +17,27 @@ export default function AdminUserPage() {
             companyName: "8PM",
             employeeId: 0,
             email: "test@example.org",
-            role: "ROLE_MANAGER",
+            role: "ROLE_MASTER",
             username: "admin",
             createdAt: Temporal.PlainDateTime.from("2026-01-01T00:00:00"),
+        },
+        {
+            companyId: 0,
+            companyName: "8PM",
+            employeeId: 1,
+            email: "test2@example.org",
+            role: "ROLE_MANAGER",
+            username: "man",
+            createdAt: Temporal.PlainDateTime.from("2026-01-01T06:00:00"),
+        },
+        {
+            companyId: 1,
+            companyName: "TEST",
+            employeeId: 1,
+            email: "wow@example.org",
+            role: "ROLE_USER",
+            username: "test",
+            createdAt: Temporal.PlainDateTime.from("2026-01-02T00:00:00"),
         },
     ];
 
@@ -51,6 +72,18 @@ export default function AdminUserPage() {
         setQueryText(queryText ?? "");
         setCreatedAt(createdAtStart, createdAtEnd);
     };
+
+    const setSort = (newIsDesc?: boolean, newOrderBy?: UserOrderBy) => {
+        if (newOrderBy) {
+            setOrderBy(newOrderBy);
+        }
+        if (newIsDesc !== undefined && newOrderBy === orderBy) {
+            setIsDesc(newIsDesc);
+        }
+    };
+
+    const [isDesc, setIsDesc] = useState(false);
+    const [orderBy, setOrderBy] = useState<UserOrderBy>("companyId");
 
     const gridStyle = `grid grid-cols-[1fr_1fr_1fr_1fr_1fr_3fr_3fr_1fr]`;
 
@@ -151,49 +184,84 @@ export default function AdminUserPage() {
                     </div>
                 </>
             }
-            contentElement={[
+            sortElement={
                 <div
-                    key="sort"
-                    className={`${gridStyle} bg-light border-t-2 border-white px-3 py-1 text-center font-bold`}
+                    className={`${gridStyle} bg-light border-t-2 border-white px-3 py-1`}
                 >
-                    <div>사번</div>
-                    <div>사명</div>
-                    <div>사원번호</div>
-                    <div>사원명</div>
-                    <div>역할</div>
-                    <div>이메일</div>
-                    <div>가입일</div>
-                    <div>삭제</div>
-                </div>,
-                users
-                    .filter(
-                        (value) =>
-                            (!role || value.role == role) &&
-                            (!createdAtStart ||
-                                Temporal.PlainDateTime.compare(
-                                    value.createdAt,
-                                    createdAtStart,
-                                ) >= 0) &&
-                            (!createdAtEnd ||
-                                Temporal.PlainDateTime.compare(
-                                    value.createdAt,
-                                    createdAtEnd,
-                                ) <= 0) &&
-                            (!queryText ||
-                                value.username.includes(queryText) ||
-                                String(value.employeeId) == queryText ||
-                                value.companyName.includes(queryText) ||
-                                String(value.companyId) == queryText ||
-                                value.email.includes(queryText)),
-                    )
-                    .map((value) => (
-                        <AdminPageUserEntry
-                            key={value.employeeId}
-                            gridStyle={gridStyle}
-                            {...value}
+                    {adminPageUserColumns.map((value) => (
+                        <AdminPageTableHeader
+                            key={value.name}
+                            headerData={value}
+                            isDesc={isDesc}
+                            orderBy={orderBy}
+                            setSort={setSort}
                         />
-                    )),
-            ]}
+                    ))}
+                </div>
+            }
+            contentElement={users
+                .filter(
+                    (value) =>
+                        (!role || value.role == role) &&
+                        (!createdAtStart ||
+                            Temporal.PlainDateTime.compare(
+                                value.createdAt,
+                                createdAtStart,
+                            ) >= 0) &&
+                        (!createdAtEnd ||
+                            Temporal.PlainDateTime.compare(
+                                value.createdAt,
+                                createdAtEnd,
+                            ) <= 0) &&
+                        (!queryText ||
+                            value.username.includes(queryText) ||
+                            String(value.employeeId) == queryText ||
+                            value.companyName.includes(queryText) ||
+                            String(value.companyId) == queryText ||
+                            value.email.includes(queryText)),
+                )
+                .sort((a, b) => {
+                    if (isDesc) {
+                        b = [a, (a = b)][0];
+                    }
+
+                    if (orderBy === "companyId" || orderBy === "employeeId") {
+                        return a[orderBy] - b[orderBy];
+                    } else if (
+                        orderBy === "companyName" ||
+                        orderBy === "username" ||
+                        orderBy === "email"
+                    ) {
+                        return a[orderBy].localeCompare(b[orderBy]);
+                    } else if (orderBy === "role") {
+                        enum RoleOrder {
+                            ROLE_MASTER,
+                            ROLE_MANAGER,
+                            ROLE_USER,
+                        }
+                        if (!a[orderBy] || !b[orderBy]) {
+                            throw new Error("역할이 비어 있습니다.");
+                        }
+                        const aEnum: RoleOrder = RoleOrder[a[orderBy]];
+                        const bEnum: RoleOrder = RoleOrder[b[orderBy]];
+
+                        return aEnum - bEnum;
+                    } else if (orderBy === "createdAt") {
+                        return Temporal.PlainDateTime.compare(
+                            a[orderBy],
+                            b[orderBy],
+                        );
+                    } else {
+                        throw new Error("올바르지 않은 정렬 기준입니다.");
+                    }
+                })
+                .map((value) => (
+                    <AdminPageUserEntry
+                        key={value.companyId + "_" + value.employeeId}
+                        gridStyle={gridStyle}
+                        {...value}
+                    />
+                ))}
         />
     );
 }

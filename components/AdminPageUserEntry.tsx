@@ -1,5 +1,5 @@
 import { getRoleName } from "@/types/role";
-import { User } from "@/types/user";
+import User from "@/types/user";
 
 export default function AdminPageUserEntry({
     companyId,
