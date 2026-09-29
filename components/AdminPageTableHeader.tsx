@@ -1,6 +1,8 @@
-import OrderBy from "@/types/orderBy";
 import Triangle from "./Triangle";
 import { AdminPageUserColumn } from "@/types/adminPageUserColumns";
+import { AdminPageFileColumn } from "@/types/adminPageFileColumns";
+import { FileOrderBy } from "@/types/fileMetadata";
+import { UserOrderBy } from "@/types/user";
 
 export default function AdminPageTableHeader({
     headerData,
@@ -8,10 +10,13 @@ export default function AdminPageTableHeader({
     isDesc,
     setSort,
 }: {
-    headerData: AdminPageUserColumn;
-    orderBy: OrderBy;
+    headerData: AdminPageUserColumn | AdminPageFileColumn;
+    orderBy: FileOrderBy | UserOrderBy;
     isDesc: boolean;
-    setSort: (isDesc?: boolean, orderBy?: OrderBy) => void;
+    setSort: (
+        newIsDesc?: boolean,
+        newOrderBy?: FileOrderBy | UserOrderBy,
+    ) => void;
 }) {
     return (
         <div

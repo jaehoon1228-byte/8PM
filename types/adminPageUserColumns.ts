@@ -1,7 +1,7 @@
-import OrderBy from "./orderBy";
+import { UserOrderBy } from "./user";
 
 export type AdminPageUserColumn = {
-    name: OrderBy;
+    name: UserOrderBy;
     displayName: string;
 };
 

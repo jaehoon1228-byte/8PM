@@ -5,6 +5,7 @@ import AdminPageTableHeader from "@/components/AdminPageTableHeader";
 import AdminPageUserEntry from "@/components/AdminPageUserEntry";
 import { useUserFilterStore } from "@/providers/userFilterProvider";
 import { adminPageUserColumns } from "@/types/adminPageUserColumns";
+import { FileOrderBy } from "@/types/fileMetadata";
 import { isRole, Role } from "@/types/role";
 import User, { UserOrderBy } from "@/types/user";
 import { useState } from "react";
@@ -194,7 +195,12 @@ export default function AdminUserPage() {
                             headerData={value}
                             isDesc={isDesc}
                             orderBy={orderBy}
-                            setSort={setSort}
+                            setSort={
+                                setSort as (
+                                    newIsDesc?: boolean,
+                                    newOrderBy?: FileOrderBy | UserOrderBy,
+                                ) => void
+                            }
                         />
                     ))}
                 </div>

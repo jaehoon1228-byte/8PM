@@ -20,10 +20,10 @@ export type FileMetadata = {
     uploadedAt: Temporal.PlainDateTime;
 };
 
-export const userProperties: (keyof FileMetadata)[] = [
+export const fileProperties: (keyof FileMetadata)[] = [
     "fileId",
     "fileName",
     "username",
     "uploadedAt",
 ];
-export type FileOrderBy = (typeof userProperties)[number];
+export type FileOrderBy = (typeof fileProperties)[number];

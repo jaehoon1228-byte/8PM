@@ -2,13 +2,13 @@
 
 import AdminPageFileEntry from "@/components/AdminPageFileEntry";
 import AdminPageContent from "@/components/AdminPageContent";
-import { FileMetadata } from "@/types/fileMetadata";
+import { FileMetadata, FileOrderBy } from "@/types/fileMetadata";
 import { useFileFilterStore } from "@/providers/fileFilterProvider";
 import { FileType } from "@/types/fileType";
 import AdminPageTableHeader from "@/components/AdminPageTableHeader";
-import { adminPageUserColumns } from "@/types/adminPageUserColumns";
-import { UserOrderBy } from "@/types/user";
 import { useState } from "react";
+import { adminPageFileColumns } from "@/types/adminPageFileColumns";
+import { UserOrderBy } from "@/types/user";
 
 /**
  * 파일 관리 페이지 컴포넌트.
@@ -18,10 +18,16 @@ export default function AdminFilePage() {
     // TODO: 샘플 데이터 사용 중. 추후 실제 DB에서 값을 가져올 것.
     const files: FileMetadata[] = [
         {
-            fileId: crypto.randomUUID(),
+            fileId: "3a08ce77-6a14-49ec-bab0-47f2ae1baa37",
             fileName: "test.docx",
             username: "admin",
             uploadedAt: new Temporal.PlainDateTime(2026, 1, 1),
+        },
+        {
+            fileId: "1a08ce77-6a14-49ec-bab0-47f2ae1baa37",
+            fileName: "test2.docx",
+            username: "man",
+            uploadedAt: new Temporal.PlainDateTime(2026, 2, 1),
         },
     ];
 
@@ -59,7 +65,7 @@ export default function AdminFilePage() {
         setCreatedAt(createdAtStart, createdAtEnd);
     };
 
-    const setSort = (newIsDesc?: boolean, newOrderBy?: UserOrderBy) => {
+    const setSort = (newIsDesc?: boolean, newOrderBy?: FileOrderBy) => {
         if (newOrderBy) {
             setOrderBy(newOrderBy);
         }
@@ -69,9 +75,9 @@ export default function AdminFilePage() {
     };
 
     const [isDesc, setIsDesc] = useState(false);
-    const [orderBy, setOrderBy] = useState<UserOrderBy>("companyId");
+    const [orderBy, setOrderBy] = useState<FileOrderBy>("fileId");
 
-    const gridStyle = `grid grid-cols-[1fr_1fr_1fr_1fr_1fr_3fr_3fr_1fr]`;
+    const gridStyle = `grid grid-cols-[6fr_4fr_4fr_4fr_1fr]`;
 
     return (
         <AdminPageContent
@@ -202,20 +208,49 @@ export default function AdminFilePage() {
                         return true;
                     }
                 })
+                .sort((a, b) => {
+                    if (isDesc) {
+                        b = [a, (a = b)][0];
+                    }
+
+                    if (
+                        orderBy === "fileId" ||
+                        orderBy === "fileName" ||
+                        orderBy === "username"
+                    ) {
+                        return a[orderBy].localeCompare(b[orderBy]);
+                    } else if (orderBy === "uploadedAt") {
+                        return Temporal.PlainDateTime.compare(
+                            a[orderBy],
+                            b[orderBy],
+                        );
+                    } else {
+                        throw new Error("올바르지 않은 정렬 기준입니다.");
+                    }
+                })
                 .map((value) => (
-                    <AdminPageFileEntry key={value.fileId} {...value} />
+                    <AdminPageFileEntry
+                        key={value.fileId}
+                        gridStyle={gridStyle}
+                        {...value}
+                    />
                 ))}
             sortElement={
                 <div
                     className={`${gridStyle} bg-light border-t-2 border-white px-3 py-1`}
                 >
-                    {adminPageUserColumns.map((value) => (
+                    {adminPageFileColumns.map((value) => (
                         <AdminPageTableHeader
                             key={value.name}
                             headerData={value}
                             isDesc={isDesc}
                             orderBy={orderBy}
-                            setSort={setSort}
+                            setSort={
+                                setSort as (
+                                    newIsDesc?: boolean,
+                                    newOrderBy?: FileOrderBy | UserOrderBy,
+                                ) => void
+                            }
                         />
                     ))}
                 </div>

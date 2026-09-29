@@ -1,21 +1,20 @@
-type FileData = {
-    fileName: string;
-    username: string;
-    uploadedAt: Temporal.PlainDateTime;
-};
+import { FileMetadata } from "@/types/fileMetadata";
 
 export default function AdminPageFileEntry({
+    fileId,
     fileName,
     username,
     uploadedAt,
-}: FileData) {
+    gridStyle,
+}: FileMetadata & { gridStyle: string }) {
     return (
-        <div className="flex flex-row justify-between border-y-2 border-white p-3">
-            <div className="flex flex-row gap-10">
-                <p>{fileName}</p>
-                <p>{username}</p>
-                <p>{uploadedAt.toLocaleString() ?? ""}</p>
-            </div>
+        <div
+            className={`${gridStyle} grid items-center justify-center border-y-2 border-white p-3 text-center`}
+        >
+            <p>{fileId}</p>
+            <p>{fileName}</p>
+            <p>{uploadedAt.toLocaleString() ?? ""}</p>
+            <p>{username}</p>
             <div
                 tabIndex={0}
                 className="font-bold text-red-700 hover:cursor-pointer"
