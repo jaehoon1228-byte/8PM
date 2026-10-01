@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ky from "ky";
 import { setRefreshToken } from "@/utils/createHttpOnlyCookie";
+import BadRequest from "./BadRequest";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -41,10 +42,12 @@ export default function LoginForm() {
             password,
         };
 
-        const loginRequest = await ky.post(
-            `${process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080"}/api/v1/login`,
-            { body: JSON.stringify(loginCredentials), throwHttpErrors: false },
-        );
+        const loginRequest = await ky.post(`/api/v1/login`, {
+            baseUrl:
+                process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080",
+            body: JSON.stringify(loginCredentials),
+            throwHttpErrors: false,
+        });
 
         if (loginRequest.ok) {
             setLoginFailed(false);
@@ -57,12 +60,12 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="w-full max-w-xl bg-[#8d95f7] rounded-3xl p-12 sm:p-16 shadow-2xl">
+        <div className="w-full max-w-xl bg-main rounded-3xl p-12 sm:p-16 shadow-2xl">
             <h1 className="text-3xl font-bold text-center text-white mb-10">
                 로그인
             </h1>
 
-            {loginFailed && <SignInFailed />}
+            {loginFailed && <BadRequest />}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -119,14 +122,6 @@ export default function LoginForm() {
                     비밀번호 설정
                 </button>
             </div>
-        </div>
-    );
-}
-
-function SignInFailed() {
-    return (
-        <div className="p-5 bg-pink-100 rounded-xl font-bold border-red-400 border-2 text-center mb-5">
-            입력한 정보가 일치하지 않습니다.
         </div>
     );
 }
