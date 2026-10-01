@@ -8,5 +8,9 @@ export async function setRefreshToken(token: string) {
     cookieStore.set("refreshToken", token, {
         httpOnly: true,
         maxAge: 30 * 24 * 86400,
+        sameSite: "none",
+        secure: true,
+        path: "/",
+        domain: "mes.thepji.kro.kr",
     });
 }
