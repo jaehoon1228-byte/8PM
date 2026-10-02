@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ky from "ky";
 import { setRefreshToken } from "@/utils/createHttpOnlyCookie";
 import BadRequest from "./BadRequest";
+import { baseUrl } from "@/utils/api";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -43,8 +44,7 @@ export default function LoginForm() {
         };
 
         const loginRequest = await ky.post(`/api/v1/login`, {
-            baseUrl:
-                process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080",
+            baseUrl,
             body: JSON.stringify(loginCredentials),
             throwHttpErrors: false,
         });

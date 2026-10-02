@@ -1,6 +1,7 @@
 import ky, { KyRequest } from "ky";
 
-const baseUrl = process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
+export const baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
 
 async function getAccessToken(request: KyRequest) {
     const accessTokenResponse = await ky.post(baseUrl + "/api/v1/jwt/refresh", {
