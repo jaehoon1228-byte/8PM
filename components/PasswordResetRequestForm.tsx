@@ -2,11 +2,9 @@
 
 import ky, { isHTTPError } from "ky";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { SubmitEvent, useState } from "react";
 import BadRequest from "./BadRequest";
-
-const backendHost =
-    process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
+import { baseUrl } from "@/utils/api";
 
 export default function PasswordResetRequestForm() {
     const router = useRouter();
@@ -20,15 +18,35 @@ export default function PasswordResetRequestForm() {
         router.push("/");
     };
 
-    const handleConfirm = () => {
-        console.log(
-            "회사일련번호: ",
-            companycode,
-            "사원번호: ",
+    const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsPending(true);
+
+        const requestBody = {
+            companyId: companycode,
             employeeId,
-            "사내 이메일: ",
-            companyEmail,
-        );
+            email: companyEmail,
+        };
+
+        try {
+            const resetRequest = await ky.post("/api/v1/password/request", {
+                baseUrl,
+                json: requestBody,
+            });
+
+            if (resetRequest.ok) {
+                router.push("/reset-pw/success");
+            }
+        } catch (e) {
+            if (isHTTPError(e) && e.response.status === 400) {
+                console.warn(e);
+                setWrongCredentials(true);
+            } else {
+                throw e;
+            }
+        } finally {
+            setIsPending(false);
+        }
     };
 
     return (
@@ -39,42 +57,7 @@ export default function PasswordResetRequestForm() {
 
             {wrongCredentials && <BadRequest />}
 
-            <form
-                className="space-y-5 flex flex-col"
-                onSubmit={async (e) => {
-                    e.preventDefault();
-
-                    setIsPending(true);
-
-                    const requestBody = {
-                        companyId: companycode,
-                        employeeId,
-                        email: companyEmail,
-                    };
-
-                    try {
-                        const resetRequest = await ky.post(
-                            "/api/v1/password/request",
-                            {
-                                baseUrl: backendHost,
-                                json: requestBody,
-                            },
-                        );
-
-                        if (resetRequest.ok) {
-                            router.push("/reset-request/success");
-                        }
-                    } catch (e) {
-                        if (isHTTPError(e) && e.response.status === 400) {
-                            console.warn(e);
-                            setWrongCredentials(true);
-                        } else {
-                            throw e;
-                        }
-                        setIsPending(false);
-                    }
-                }}
-            >
+            <form className="space-y-5 flex flex-col" onSubmit={handleSubmit}>
                 <div>
                     <label
                         className="mb-1.5 block text-sm text-white/90 md:text-base"
@@ -134,7 +117,7 @@ export default function PasswordResetRequestForm() {
 
                 <button
                     type="submit"
-                    className="bg-white p-5 rounded-lg hover:cursor-pointer disabled:bg-gray-300 disabled:hover:cursor-not-allowed"
+                    className="bg-white p-5 rounded-lg hover:cursor-pointer disabled:bg-gray-300 disabled:hover:cursor-progress"
                     disabled={isPending}
                 >
                     {isPending ? "전송 중..." : "재설정"}
