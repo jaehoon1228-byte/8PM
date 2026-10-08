@@ -48,26 +48,26 @@ export default function DashboardForm() {
 
     const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
 
-    // useEffect(() => {
-    //     const fetchMyInfo = async () => {
-    //         try {
-    //             const request = await api.get("/api/v1/users/me");
-    //             const response = await request.json<UserInfo>();
-    //             setUserInfo(response);
-    //         } catch (error) {
-    //             if (isHTTPError(error)) {
-    //                 console.error(
-    //                     "통신 에러가 발생했습니다.",
-    //                     error.message,
-    //                 );
-    //             } else {
-    //                 console.error("Unknown error: ", error);
-    //             }
-    //         }
-    //     };
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            try {
+                const request = await api.get("/api/v1/users/me");
+                const response = await request.json<UserInfo>();
+                setUserInfo(response);
+            } catch (error) {
+                if (isHTTPError(error)) {
+                    console.error(
+                        "통신 에러가 발생했습니다.",
+                        error.message,
+                    );
+                } else {
+                    console.error("Unknown error: ", error);
+                }
+            }
+        };
     
-    //     fetchMyInfo();
-    // }, []);
+        fetchMyInfo();
+    }, []);
 
     useEffect(() => {
         if (textareaRef.current) {
