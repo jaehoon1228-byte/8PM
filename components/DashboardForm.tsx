@@ -1,402 +1,555 @@
 "use client";
 
-import { api } from "@/utils/api";
-import { isHTTPError } from "ky";
+// =====================================================================
+// 메인(대시보드) 화면 컨테이너
+//  - 백엔드(MES-AI-ChatBot-Web-BackEnd) API 규격에 맞춰 동작
+//    1) 새 대화에서 첫 질문 시: POST /api/v1/chat/sessionrooms → POST /api/v1/chat/sessions/{sessionId}/ask
+//    2) 대화방 선택 시: GET /api/v1/chat/sessions/{sessionId}/histories
+//    3) 대화방 삭제 시: DELETE /api/v1/chat/sessions/{sessionId}
+//    4) 파일 업로드: POST /api/v1/files/upload (multipart/form-data, key="file")
+//    5) 파일 삭제: DELETE /api/v1/files/delete/{fileId}
+//  - 푸시 알림 ON 시: 다른 탭/작업 이동 또는 설정 창 열람 중에 AI 답변 도착 시 데스크톱 알림 & 인앱 토스트 표시
+// =====================================================================
+
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { BellRing, X } from "lucide-react";
+import { isHTTPError } from "ky";
+import ChatSidebar from "@/components/dashboard/ChatSidebar";
+import ChatPanel from "@/components/dashboard/ChatPanel";
+import ProfileCard from "@/components/dashboard/ProfileCard";
+import FileListPanel from "@/components/dashboard/FileListPanel";
+import SettingsModal from "@/components/dashboard/SettingsModal";
+import {
+    askToLlm,
+    createChatSession,
+    deleteChatSession,
+    deleteFile,
+    extractErrorMessage,
+    fetchChatHistories,
+    fetchChatSessions,
+    fetchMyInfo,
+    isSessionExpired,
+    uploadFiles,
+} from "@/utils/dashboardApi";
+import { formatTime } from "@/utils/endpoints";
+import {
+    applyThemeClass,
+    getPreferences,
+    notifyChatResponseReady,
+} from "@/utils/preferences";
+import type {
+    ChatSession,
+    DashboardInitialData,
+    Message,
+    UploadedFile,
+    UserInfo,
+} from "@/types/dashboard";
 
-interface Message {
-    id: number;
-    text: string;
-    sender: "user" | "bot";
-    timestamp: string;
+interface DashboardFormProps {
+    initialData?: DashboardInitialData;
 }
 
-interface ChatSession {
-    id: number;
+interface ReplyBanner {
+    sessionId: string;
     title: string;
-    messages: Message[];
+    preview: string;
 }
 
-interface UserInfo {
-    companyId: number;
-    companyName: number;
-    employeeId: number;
-    username: string;
-    email: string;
-    role: string;
-}
+const EMPTY_INITIAL_DATA: DashboardInitialData = {
+    userInfo: null,
+    chatSessions: null,
+    files: null,
+};
 
-interface UploadedFile {
-    id: number;
-    name: string;
-    size: string;
-}
+const STORAGE_KEYS = {
+    sessions: (empId: number) => `mes_chat_sessions_${empId}`,
+    files: (empId: number) => `mes_uploaded_files_${empId}`,
+};
 
-export default function DashboardForm() {
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: DashboardFormProps) {
+    const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const router = useRouter();
-    const [input, setInput] = useState("");
+    // ---------------- 서버 데이터 (SSR 초기값) ----------------
+    const [userInfo, setUserInfo] = useState<UserInfo | undefined>(
+        initialData.userInfo ?? undefined,
+    );
+    const [chatSessions, setChatSessions] = useState<ChatSession[]>(
+        initialData.chatSessions ?? [],
+    );
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(initialData.files ?? []);
 
-    const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-    const [activeChatId, setActiveChatId] = useState<number | null>(null);
+    // ---------------- 클라이언트 UI 상태 (CSR) ----------------
+    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [sendingChatId, setSendingChatId] = useState<string | null>(null);
+    const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [resetKey, setResetKey] = useState(0);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [replyBanner, setReplyBanner] = useState<ReplyBanner | null>(null);
 
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const currentChat = chatSessions.find((chat) => chat.id === activeChatId);
-
-    const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+    const activeChatIdRef = useRef<string | null>(null);
+    const isSettingsOpenRef = useRef(false);
+    const loadingChatIdsRef = useRef<Set<string>>(new Set());
+    const isRedirectingRef = useRef(false);
+    const storageHydratedRef = useRef(false);
 
     useEffect(() => {
-        const fetchMyInfo = async () => {
-            try {
-                const request = await api.get("/api/v1/users/me");
-                const response = await request.json<UserInfo>();
-                setUserInfo(response);
-            } catch (error) {
-                if (isHTTPError(error)) {
-                    console.error(
-                        "통신 에러가 발생했습니다.",
-                        error.message,
-                    );
-                } else {
-                    console.error("Unknown error: ", error);
-                }
+        activeChatIdRef.current = activeChatId;
+    }, [activeChatId]);
+
+    useEffect(() => {
+        isSettingsOpenRef.current = isSettingsOpen;
+    }, [isSettingsOpen]);
+
+    useEffect(() => {
+        applyThemeClass(getPreferences().darkMode);
+    }, []);
+
+    const currentChat = chatSessions.find((chat) => chat.id === activeChatId);
+
+    /** 사원번호가 확인된 시점에 로컬 스토리지에 보존된 대화방/파일 메타데이터를 복원 */
+    const hydrateFromStorage = (employeeId: number) => {
+        if (storageHydratedRef.current) return;
+        try {
+            const savedSessions = localStorage.getItem(STORAGE_KEYS.sessions(employeeId));
+            if (savedSessions) {
+                const parsed = JSON.parse(savedSessions) as ChatSession[];
+                setChatSessions((prev) => {
+                    const existingIds = new Set(prev.map((s) => s.id));
+                    const restored = parsed
+                        .filter((s) => !s.id.startsWith("temp-") && !existingIds.has(s.id))
+                        .map((s) => ({ ...s, messages: [], isLoaded: false }));
+                    return [...prev, ...restored];
+                });
             }
+
+            const savedFiles = localStorage.getItem(STORAGE_KEYS.files(employeeId));
+            if (savedFiles) {
+                const parsed = JSON.parse(savedFiles) as UploadedFile[];
+                setUploadedFiles((prev) => {
+                    const existingIds = new Set(prev.map((f) => f.id));
+                    return [...prev, ...parsed.filter((f) => !existingIds.has(f.id))];
+                });
+            }
+        } catch (error) {
+            console.error("로컬 저장 데이터 복원 실패:", error);
+        } finally {
+            storageHydratedRef.current = true;
+        }
+    };
+
+    /** 공통 에러 처리: 세션 만료 시 1회만 안내 후 로그인 화면으로 이동 */
+    const handleApiError = async (
+        error: unknown,
+        fallbackMessage: string,
+        notify = false,
+    ): Promise<boolean> => {
+        if (isSessionExpired(error)) {
+            if (!isRedirectingRef.current) {
+                isRedirectingRef.current = true;
+                alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                router.push("/");
+            }
+            return true;
+        }
+
+        const detailMessage = await extractErrorMessage(error, fallbackMessage);
+        if (isHTTPError(error)) {
+            console.error(fallbackMessage, error.response.status, detailMessage);
+        } else {
+            console.error(fallbackMessage, error);
+        }
+        if (notify) alert(detailMessage);
+        return false;
+    };
+
+    // ---------------- CSR Fallback & 로컬 스토리지 복원 ----------------
+    useEffect(() => {
+        let ignore = false;
+
+        if (initialData.userInfo?.employeeId) {
+            queueMicrotask(() => {
+                if (!ignore && initialData.userInfo?.employeeId) {
+                    hydrateFromStorage(initialData.userInfo.employeeId);
+                }
+            });
+        }
+
+        const tasks: Promise<void>[] = [];
+
+        if (initialData.userInfo === null) {
+            tasks.push(
+                fetchMyInfo()
+                    .then((data) => {
+                        if (!ignore) {
+                            setUserInfo(data);
+                            hydrateFromStorage(data.employeeId);
+                        }
+                    })
+                    .catch((err) => {
+                        if (!ignore) void handleApiError(err, "사용자 정보 조회에 실패했습니다.");
+                    }),
+            );
+        }
+        if (initialData.chatSessions === null) {
+            tasks.push(
+                fetchChatSessions()
+                    .then((data) => {
+                        if (!ignore && data.length > 0) {
+                            setChatSessions((prev) => {
+                                const existingIds = new Set(data.map((s) => s.id));
+                                return [...prev.filter((c) => !existingIds.has(c.id)), ...data];
+                            });
+                        }
+                    })
+                    .catch((err) => {
+                        if (!ignore) void handleApiError(err, "채팅 목록 조회에 실패했습니다.");
+                    }),
+            );
+        }
+
+        void Promise.all(tasks);
+        return () => {
+            ignore = true;
         };
-    
-        fetchMyInfo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
-        }
-    }, [input]);
-
-    const handleOpenFilePicker = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-        const newFiles: UploadedFile[] = Array.from(files).map((file, idx) => ({
-            id: Date.now() + idx,
-            name: file.name,
-            size: `${(file.size / (1024 * 1024)).toFixed(1)}MB`,
-        }));
-        setUploadedFiles((prev) => [...newFiles, ...prev]);
-        e.target.value = "";
-    };
-
-    const handleRemoveFile = (id: number) => {
-        setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
-    }
-
-    const handleLogout = async () => {
+        if (!userInfo?.employeeId || !storageHydratedRef.current) return;
         try {
-            await api.post("/api/v1/logout");
-        } catch (error) {
-            console.error("로그아웃 실패:", error);
-        } finally {
-            router.push("/");
+            const persistableSessions = chatSessions
+                .filter((s) => !s.id.startsWith("temp-"))
+                .map(({ id, title }) => ({ id, title, messages: [], isLoaded: false }));
+            localStorage.setItem(
+                STORAGE_KEYS.sessions(userInfo.employeeId),
+                JSON.stringify(persistableSessions),
+            );
+        } catch {
+            // 스토리지 용량 초과 등은 무시
         }
-    };
+    }, [chatSessions, userInfo?.employeeId]);
 
+    useEffect(() => {
+        if (!userInfo?.employeeId || !storageHydratedRef.current) return;
+        try {
+            localStorage.setItem(
+                STORAGE_KEYS.files(userInfo.employeeId),
+                JSON.stringify(uploadedFiles),
+            );
+        } catch {
+            // 스토리지 용량 초과 등은 무시
+        }
+    }, [uploadedFiles, userInfo?.employeeId]);
+
+    // ---------------- 채팅 ----------------
     const handleNewChat = () => {
         setActiveChatId(null);
-        setInput("");
+        setResetKey((prev) => prev + 1);
     };
 
-    const handleSelectChat = (id: number) => {
+    const handleSelectChat = async (id: string) => {
         setActiveChatId(id);
+
+        const target = chatSessions.find((chat) => chat.id === id);
+        if (
+            !target ||
+            target.isLoaded ||
+            id.startsWith("temp-") ||
+            loadingChatIdsRef.current.has(id)
+        ) {
+            return;
+        }
+
+        loadingChatIdsRef.current.add(id);
+        setLoadingChatId(id);
+        try {
+            const messages = await fetchChatHistories(id);
+            setChatSessions((prev) =>
+                prev.map((chat) =>
+                    chat.id === id
+                        ? { ...chat, messages: [...messages, ...chat.messages], isLoaded: true }
+                        : chat,
+                ),
+            );
+        } catch (error) {
+            await handleApiError(error, "대화 내역을 불러오지 못했습니다.", true);
+        } finally {
+            loadingChatIdsRef.current.delete(id);
+            setLoadingChatId((prev) => (prev === id ? null : prev));
+        }
     };
 
-    const handleSubmit = (e?: React.SubmitEvent) => {
-        if (e) e.preventDefault();
-        if (!input.trim()) return;
+    /** 1. 채팅방 삭제 기능 */
+    const handleDeleteChat = async (id: string) => {
+        const index = chatSessions.findIndex((c) => c.id === id);
+        if (index === -1) return;
+        const target = chatSessions[index];
 
-        const newMsg: Message = {
-            id: Date.now(),
-            text: input.trim(),
+        if (!confirm(`'${target.title}' 채팅방을 삭제하시겠습니까?`)) return;
+
+        // 낙관적 업데이트: 화면에서 먼저 제거
+        setChatSessions((prev) => prev.filter((c) => c.id !== id));
+        if (activeChatId === id) {
+            setActiveChatId(null);
+        }
+
+        try {
+            await deleteChatSession(id);
+        } catch (error) {
+            setChatSessions((prev) => {
+                if (prev.some((c) => c.id === id)) return prev;
+                const next = [...prev];
+                next.splice(Math.min(index, next.length), 0, target);
+                return next;
+            });
+            await handleApiError(error, "채팅방 삭제에 실패했습니다.", true);
+        }
+    };
+
+    const handleSend = async (text: string) => {
+        if (sendingChatId !== null) return;
+
+        const userMsg: Message = {
+            id: `user-${Date.now()}`,
+            text,
             sender: "user",
-            timestamp: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
+            timestamp: formatTime(new Date()),
         };
 
-        if (activeChatId === null) {
-            const newSessionId = Date.now();
-            const newSession: ChatSession = {
-                id: newSessionId,
-                title: input.trim(),
-                messages: [newMsg],
-            };
+        const isNewSession = activeChatId === null;
+        const localChatId = activeChatId ?? `temp-${Date.now()}`;
 
-            setChatSessions((prev) => [newSession, ...prev]);
-            setActiveChatId(newSessionId);
+        if (isNewSession) {
+            const optimisticSession: ChatSession = {
+                id: localChatId,
+                title: text,
+                messages: [userMsg],
+                isLoaded: true,
+            };
+            setChatSessions((prev) => [optimisticSession, ...prev]);
+            setActiveChatId(localChatId);
         } else {
             setChatSessions((prev) =>
                 prev.map((chat) =>
-                    chat.id === activeChatId
-                        ? { ...chat, messages: [...chat.messages, newMsg] }
+                    chat.id === localChatId
+                        ? { ...chat, messages: [...chat.messages, userMsg] }
                         : chat,
                 ),
             );
         }
 
-        setInput("");
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
+        setSendingChatId(localChatId);
+        let targetSessionId = localChatId;
+        let sessionTitle = text;
+
+        try {
+            if (isNewSession) {
+                const created = await createChatSession(text);
+                targetSessionId = created.id;
+                sessionTitle = created.title || text;
+
+                setChatSessions((prev) =>
+                    prev.map((chat) =>
+                        chat.id === localChatId
+                            ? { ...chat, id: created.id, title: sessionTitle }
+                            : chat,
+                    ),
+                );
+                setActiveChatId((prev) => (prev === localChatId ? created.id : prev));
+                setSendingChatId(created.id);
+            } else {
+                const found = chatSessions.find((c) => c.id === localChatId);
+                if (found) sessionTitle = found.title;
+            }
+
+            const answerMsg = await askToLlm(targetSessionId, text);
+
+            setChatSessions((prev) =>
+                prev.map((chat) =>
+                    chat.id === targetSessionId
+                        ? { ...chat, messages: [...chat.messages, answerMsg] }
+                        : chat,
+                ),
+            );
+
+            // 2-3. 푸시 알림이 켜져 있고, 사용자가 다른 탭/창을 보고 있거나 다른 대화방/설정창에 있을 때 알림 발송
+            const prefs = getPreferences();
+            const isAwayFromThisChat =
+                document.visibilityState === "hidden" ||
+                !document.hasFocus() ||
+                activeChatIdRef.current !== targetSessionId ||
+                isSettingsOpenRef.current;
+
+            if (prefs.notifications && isAwayFromThisChat) {
+                notifyChatResponseReady(sessionTitle, answerMsg.text);
+                setReplyBanner({
+                    sessionId: targetSessionId,
+                    title: sessionTitle,
+                    preview: answerMsg.text.replace(/\s+/g, " ").slice(0, 75),
+                });
+            }
+        } catch (error) {
+            const expired = await handleApiError(error, "메시지 전송에 실패했습니다.");
+            if (!expired) {
+                const errorMsg: Message = {
+                    id: `err-${Date.now()}`,
+                    text: "답변을 받지 못했습니다. 잠시 후 다시 시도해주세요.",
+                    sender: "bot",
+                    timestamp: formatTime(new Date()),
+                };
+                setChatSessions((prev) =>
+                    prev.map((chat) =>
+                        chat.id === targetSessionId
+                            ? { ...chat, messages: [...chat.messages, errorMsg] }
+                            : chat,
+                    ),
+                );
+            }
+        } finally {
+            setSendingChatId(null);
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            if (e.nativeEvent.isComposing) return;
-            e.preventDefault();
-            handleSubmit();
+    // ---------------- 파일 ----------------
+    const handleOpenFilePicker = () => {
+        if (isUploading) return;
+        fileInputRef.current?.click();
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const selected = Array.from(files);
+        e.target.value = "";
+
+        setIsUploading(true);
+        try {
+            const { uploaded, failed } = await uploadFiles(selected);
+            if (uploaded.length > 0) {
+                setUploadedFiles((prev) => [...uploaded, ...prev]);
+            }
+            if (failed.length > 0) {
+                const summary = failed.map((f) => `- ${f.name}: ${f.reason}`).join("\n");
+                alert(`일부 파일 업로드에 실패했습니다.\n${summary}`);
+            }
+        } catch (error) {
+            await handleApiError(error, "파일 업로드에 실패했습니다.", true);
+        } finally {
+            setIsUploading(false);
         }
+    };
+
+    const handleRemoveFile = async (id: string) => {
+        const index = uploadedFiles.findIndex((file) => file.id === id);
+        if (index === -1) return;
+        const removed = uploadedFiles[index];
+
+        if (!confirm(`'${removed.name}' 파일을 삭제하시겠습니까?`)) return;
+
+        setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
+        try {
+            await deleteFile(id);
+        } catch (error) {
+            setUploadedFiles((prev) => {
+                if (prev.some((file) => file.id === id)) return prev;
+                const next = [...prev];
+                next.splice(Math.min(index, next.length), 0, removed);
+                return next;
+            });
+            await handleApiError(error, "파일 삭제에 실패했습니다.", true);
+        }
+    };
+
+    const handleClearLocalCache = () => {
+        setChatSessions([]);
+        setUploadedFiles([]);
+        setActiveChatId(null);
     };
 
     return (
-        <div className="flex h-screen w-full bg-[#7C8CEE] p-6 gap-6 relative overflow-hidden font-sans box-border">
+        <div className="flex h-screen w-full bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-5 gap-5 relative overflow-hidden font-sans box-border transition-colors">
             <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
+                accept=".pdf,.docx,.xlsx,.pptx,.csv"
                 className="hidden"
                 multiple
             />
 
-            <aside className="w-64 bg-[#8C9CFF] rounded-3xl p-5 flex flex-col shadow-inner border border-white/20 shrink-0">
-                <button
-                    onClick={handleNewChat}
-                    className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm mb-6 cursor-pointer"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2}
-                        stroke="currentColor"
-                        className="w-5 h-5"
+            {/* 2-3. 푸시 알림 토스트 배너 (다른 작업 중 답변 완료 시 표시) */}
+            {replyBanner && (
+                <div className="fixed top-6 right-6 z-50 max-w-sm bg-slate-900 dark:bg-indigo-950 text-white rounded-2xl p-4 shadow-2xl border border-indigo-500/30 flex items-start gap-3 animate-bounce">
+                    <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0">
+                        <BellRing className="w-4 h-4" />
+                    </div>
+                    <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => {
+                            setIsSettingsOpen(false);
+                            setActiveChatId(replyBanner.sessionId);
+                            setReplyBanner(null);
+                        }}
                     >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                        />
-                    </svg>
-                    <span>새 채팅</span>
-                </button>
-
-                <div className="text-white/90 text-base font-semibold mb-3 px-1">
-                    채팅 내역
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                    {chatSessions.length === 0 ? (
-                        <p className="text-white/60 text-xs px-1">이전 대화가 없습니다.</p>
-                    ) : (
-                        chatSessions.map((session) => (
-                            <button
-                                key={session.id}
-                                onClick={() => handleSelectChat(session.id)}
-                                className={`w-full text-left p-3 rounded-xl truncate transition-colors text-sm cursor-pointer ${
-                                    activeChatId === session.id
-                                        ? "bg-white/30 text-white font-semibold"
-                                        : "bg-white/10 hover:bg-white/20 text-white/90"
-                                }`}
-                                title={session.title}
-                            >
-                                {session.title}
-                            </button>
-                        ))
-                    )}
-                </div>
-            </aside>
-
-            <main className="flex-1 bg-[#A1B0FF] rounded-3xl p-8 flex flex-col justify-between relative shadow-sm border border-white/10 overflow-hidden">
-                {!currentChat ? (
-                    <div className="flex-1 flex items-center justify-center">
-                        <h1 className="text-white text-4xl font-bold tracking-wide">
-                            {userInfo?.companyName}
-                        </h1>
+                        <p className="text-xs font-bold text-indigo-300">
+                            AI 답변 도착 · {replyBanner.title}
+                        </p>
+                        <p className="text-xs text-slate-200 truncate mt-0.5">
+                            {replyBanner.preview}
+                        </p>
                     </div>
-                ) : (
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 mb-4 custom-scrollbar">
-                        {currentChat.messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`flex flex-col ${
-                                    msg.sender === "user" ? "items-end" : "items-start"
-                                }`}
-                            >
-                                <div
-                                    className={`max-w-md px-5 py-3 rounded-2xl text-sm whitespace-pre-wrap wrap-break-word ${
-                                        msg.sender === "user"
-                                            ? "bg-indigo-600 text-white rounded-br-none shadow-md"
-                                            : "bg-white text-gray-800 rounded-bl-none shadow-md"
-                                    }`}
-                                >
-                                    {msg.text}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="w-full max-w-xl relative flex items-center mx-auto gap-2"
-                >
                     <button
                         type="button"
-                        onClick={handleOpenFilePicker}
-                        className="p-3 bg-[#E5E7EB] hover:bg-gray-300 text-gray-700 rounded-2xl transition-colors shadow-md flex items-center justify-center cursor-pointer shrink-0"
-                        title="파일첨부"
+                        onClick={() => setReplyBanner(null)}
+                        className="text-slate-400 hover:text-white p-1 cursor-pointer"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.8}
-                            stroke="currentColor"
-                            className="w-5 h-5"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94a3 3 0 114.243 4.243L8.587 18.292a1.5 1.5 0 01-2.122-2.122l8.835-8.835"
-                            />
-                        </svg>
+                        <X className="w-4 h-4" />
                     </button>
-                    <div className="relative flex-1 flex items-center">
-                        <textarea
-                            ref={textareaRef}
-                            rows={1}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="무엇이든 물어보세요."
-                            className="w-full bg-[#E5E7EB] text-gray-800 placeholder-gray-500 rounded-2xl py-3.5 pl-6 pr-14 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-md resize-none overflow-y-auto max-h-40 custom-scrollbar"
-                        />
-                        <button
-                            type="submit"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-gray-700 hover:text-black transition-colors rounded-full hover:bg-gray-300/50 cursor-pointer flex items-center justify-center"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2}
-                                stroke="currentColor"
-                                className="w-5 h-5 -rotate-45"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-                </form>
-            </main>
+                </div>
+            )}
 
-            <div className="w-72 flex flex-col gap-6 shrink-0">
-                <aside
-                    onClick={() => router.push("/settings")}
-                    className="w-full bg-[#8C9CFF] hover:bg-[#7b8ce8] transition-colors rounded-3xl p-5 shadow-inner border border-white/20 flex justify-between items-center text-left cursor-pointer group"
-                >
-                    <div>
-                        <p className="text-black font-medium text-base">
-                            {userInfo?.username}님 환영합니다.
-                        </p>
-                        <p className="text-black/80 text-xs mt-1">
-                            사원번호: {userInfo?.employeeId}
-                        </p>
-                    </div>
-                    <div className="w-8 h-8 bg-white/80 rounded-full shadow-sm cursor-pointer hover:bg-white transition-colors shrink-0" />
-                </aside>
+            <ChatSidebar
+                chatSessions={chatSessions}
+                activeChatId={activeChatId}
+                onNewChat={handleNewChat}
+                onSelectChat={handleSelectChat}
+                onDeleteChat={handleDeleteChat}
+            />
 
-                <aside className="flex-1 bg-[#8C9CFF] rounded-3xl p-5 shadow-inner border border-white/20 flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-black font-bold text-base">내가 올린 파일</h2>
-                        <span className="text-xs text-black/60 font-medium">
-                            {uploadedFiles.length}개
-                        </span>
-                    </div>
+            <ChatPanel
+                currentChat={currentChat}
+                companyName={userInfo?.companyName}
+                isSending={sendingChatId !== null}
+                isWaitingReply={sendingChatId !== null && sendingChatId === activeChatId}
+                isLoadingMessages={loadingChatId !== null && loadingChatId === activeChatId}
+                resetKey={resetKey}
+                onSend={handleSend}
+                onOpenFilePicker={handleOpenFilePicker}
+            />
 
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                        {uploadedFiles.length === 0 ? (
-                            <p className="text-black/50 text-xs py-2">
-                                업로드된 파일이 없습니다.
-                            </p>
-                        ) : (
-                            uploadedFiles.map((file) => (
-                                <div
-                                    key={file.id}
-                                    className="bg-white/20 hover:bg-white/30 p-3 rounded-2xl flex items-center justify-between gap-2 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-2.5 overflow-hidden">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={1.8}
-                                            stroke="currentColor"
-                                            className="w-5 text-black/70 shrink-0"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                                            />
-                                        </svg>
-                                        <div className="overflow-hidden">
-                                            <p className="text-xs text-black font-medium truncate">
-                                                {file.name}
-                                            </p>
-                                            <p className="text-[10px] text-black/60">{file.size}</p>
-                                        </div>
-                                    </div>
+            <div className="w-72 flex flex-col gap-5 shrink-0">
+                <ProfileCard
+                    userInfo={userInfo}
+                    onOpenSettings={() => setIsSettingsOpen(true)}
+                />
 
-                                    <button 
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveFile(file.id);
-                                        }}
-                                        className="text-black/40 hover:text-red-600 p-1 rounded transition-colors cursor-pointer"
-                                        title="삭제"
-                                    >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                            strokeWidth={2}
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </aside>
+                <FileListPanel
+                    uploadedFiles={uploadedFiles}
+                    isUploading={isUploading}
+                    onRemoveFile={handleRemoveFile}
+                />
             </div>
+
+            {/* 2. 우측 상단 원형 버튼 클릭 시 열리는 통합 설정 모달 */}
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                userInfo={userInfo}
+                onClearLocalCache={handleClearLocalCache}
+            />
         </div>
     );
 }
