@@ -134,14 +134,6 @@ export default function LoginForm() {
             <div className="flex justify-between items-center mt-8 pt-5 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                 <button
                     type="button"
-                    onClick={() => router.push("/register")}
-                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none cursor-pointer"
-                >
-                    회원가입
-                </button>
-
-                <button
-                    type="button"
                     onClick={() => router.push("/reset-password")}
                     className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none cursor-pointer"
                 >

@@ -101,7 +101,7 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
     } catch (error) {
         if (
             isHTTPError(error) &&
-            (error.response.status === 404 || error.response.status === 405)
+            error.response.status === 404
         ) {
             return;
         }
