@@ -5,14 +5,18 @@ import { useState } from "react";
 import { Building2, IdCard, KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
 import Form from "next/form";
+import { baseUrl } from "@/utils/api";
+import ky, { isHTTPError } from "ky";
 
 export default function PasswordResetForm() {
     const router = useRouter();
     const [employeeId, setEmployeeId] = useState("");
     const [companyEmail, setCompanyEmail] = useState("");
     const [companycode, setCompanyCode] = useState("");
+    const [isPending, setIsPending] = useState(false);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
+        setIsPending(true);
         if (!companycode.trim()) {
             alert("회사일련번호를 입력하세요.");
             return;
@@ -33,6 +37,35 @@ export default function PasswordResetForm() {
             "사내 이메일: ",
             companyEmail,
         );
+
+        const requestBody = {
+            companyId: companycode,
+            employeeId,
+            email: companyEmail,
+        };
+
+        try {
+            const resetRequest = await ky.post("/api/v1/password/request", {
+                baseUrl,
+                json: requestBody,
+            });
+
+            if (resetRequest.ok) {
+                router.push("/reset-pw/success");
+            }
+        } catch (e) {
+            if (isHTTPError(e) && e.response.status === 400) {
+                console.warn(e);
+                // setWrongCredentials(true);
+                alert("정보가 잘못되었습니다.");
+                return;
+            } else {
+                throw e;
+            }
+        } finally {
+            setIsPending(false);
+        }
+
         alert("비밀번호 재설정 안내 메일이 발송되었습니다.");
         router.push("/login");
     };
@@ -116,6 +149,7 @@ export default function PasswordResetForm() {
                     </Link>
                     <button
                         type="submit"
+                        disabled={isPending}
                         className="flex-1 py-3.5 rounded-xl bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 transition cursor-pointer"
                     >
                         확인
