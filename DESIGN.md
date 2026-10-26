@@ -1,94 +1,60 @@
-# Design System: MES AI ChatBot Web
-
-**Project:** MES AI ChatBot Web (프로젝트 ID는 로컬 저장소 기준 분석으로 확인 불가)
-**분석 범위:** `/`, `/dashboard`, `/register`, `/settings`, `/reset-password`
-**근거:** 페이지와 React 컴포넌트의 Tailwind 클래스, `app/globals.css`, `app/layout.tsx`. 화면별 세부 사항은 해당 라우트의 실제 구현을 기준으로 하며, 아래에서 “코드에 명시된 값”과 “시각적 해석”을 구분한다.
+# Design System: MES AI ChatBot
 
 ## 1. Visual Theme & Atmosphere
 
-전체 인상은 차분하고 기술적인 엔터프라이즈 작업 공간이다. 밝은 화면에서는 옅은 슬레이트와 인디고가 섞인 배경 위에 반투명 흰 패널을 놓고, 다크 모드에서는 잉크빛 남색 바탕과 밝은 텍스트로 전환한다. 인디고에서 바이올렛으로 흐르는 강조색과 부드러운 모서리, 약한 유리 느낌의 블러가 딱딱한 업무 도구에 친근함을 더한다. 이 분위기 설명은 반복되는 색·투명도·그림자 사용에 대한 시각적 해석이다.
+An airy, restrained enterprise workspace with a calm slate foundation and a focused indigo-to-violet action color. The interface uses generous open space, translucent white surfaces, soft borders, and rounded geometry to make account and work screens feel approachable without losing their utilitarian clarity. Light mode is the clearest reference; dark mode keeps the same hierarchy on deep navy-slate surfaces.
+
+The `/` dashboard is an application of this system: it arranges chat history, conversation, and profile/file panels as a three-column workspace. The captured narrow viewport compresses the middle brand panel, so treat the three-column arrangement as an observed desktop pattern, not a rule for narrow screens.
 
 ## 2. Color Palette & Roles
 
-| 이름 | 색상 | 역할 |
-|---|---|---|
-| 미스트 슬레이트 | `#F8FAFC` | 전역 밝은 배경(`--background`) |
-| 미드나잇 잉크 | `#090D16` | 다크 모드 전역 배경 및 페이지 그라데이션의 어두운 끝 |
-| 딥 네이비 슬레이트 | `#0F172A` | 기본 전경 텍스트, 다크 배경 그라데이션의 중심 |
-| 프로스트 화이트 | `#F1F5F9` | 다크 모드 전경 텍스트 |
-| 화이트 | `#FFFFFF` | 카드와 입력 포커스 배경, 주요 버튼 글자 |
-| 인디고 600 | `#4F46E5` | 주요 버튼·아이콘·포커스 링의 시작 색 |
-| 인디고 500 | `#6366F1` | 주요 버튼 호버 색, 포커스 테두리 |
-| 바이올렛 600 | `#7C3AED` | 주요 그라데이션의 끝 색 |
-| 바이올렛 500 | `#8B5CF6` | 일부 아바타 그라데이션의 끝 색 |
-| 슬레이트 50 | `#F8FAFC` | 밝은 폼 필드·보조 표면 |
-| 슬레이트 100 | `#F1F5F9` | 보조 버튼·중립 배지·채팅 표면 |
-| 슬레이트 200 | `#E2E8F0` | 밝은 테두리와 구분선 |
-| 슬레이트 400 | `#94A3B8` | 보조 아이콘·플레이스홀더 |
-| 슬레이트 500 | `#64748B` | 보조 설명 텍스트 |
-| 슬레이트 700 | `#334155` | 다크 입력 경계와 중간 명도 표면 |
-| 슬레이트 800 | `#1E293B` | 다크 입력·패널 내부 표면 |
-| 슬레이트 900 | `#0F172A` | 다크 카드 표면 |
-| 로즈 600 | `#E11D48` | 로그인 실패 등 오류 상태 |
+### Core surfaces and text
 
-위 HEX는 저장소에 명시된 커스텀 값 또는 프로젝트 Tailwind 설정에서 사용하는 기본 Tailwind 색상값이다. 투명도 modifier(`/10`, `/80` 등)는 컴포넌트마다 다르므로 클래스의 투명도 값을 그대로 유지한다. 페이지 배경은 밝은 슬레이트에서 옅은 인디고, 다시 슬레이트로 이어지는 대각선 그라데이션을 사용하고, 다크에서는 `#090D16`–`#0F172A`–`#090D16` 순서로 바뀐다.
+- **Cool Mist Canvas** (`#F1F5F9`): outer light-mode backdrop, often blended with a faint indigo tint toward the center and a pale slate edge.
+- **Paper White** (`#FFFFFF`): primary cards and modal surfaces; forms use a slightly translucent white treatment (`95%`).
+- **Deep Ink Slate** (`#0F172A`): primary text and the main dark-surface family.
+- **Muted Slate** (`#64748B`): supporting copy, secondary labels, and low-emphasis details.
+- **Soft Slate Border** (`#E2E8F0`): card and input outlines; many surfaces use reduced opacity for a quieter edge.
+- **Input Mist** (`#F8FAFC`): resting input background in light mode.
+
+### Accent and state colors
+
+- **Focused Indigo** (`#4F46E5`): primary action gradient start, focus border, selected states, and active icons.
+- **Violet Accent** (`#7C3AED`): primary action gradient end, adding a small amount of energy to key actions.
+- **Pale Indigo Wash** (`#EEF2FF`): subtle highlighted and selected backgrounds.
+- **Deep Night Canvas** (`#090D16`): dark-mode page background.
+- **Night Slate Surface** (`#0F172A`): dark cards and modal surfaces; inputs and nested regions step up to slate (`#1E293B`).
+- **Dark Slate Border** (`#1E293B`): dark-mode card outlines; controls may use the next lighter slate (`#334155`) for definition.
+- **Soft Rose** (`#E11D48`): destructive or logout actions, paired with a pale rose background when the action is secondary.
+
+Color utilities with alpha (such as white at 90–95%, slate borders at 80%, or indigo focus rings at 15%) are overlays on their respective surfaces; preserve that translucent quality instead of treating them as opaque palette swatches.
 
 ## 3. Typography Rules
 
-- 본문은 `Pretendard Variable`을 우선 사용하고 Pretendard, 시스템 UI, Roboto 및 한글 시스템 글꼴을 대체 글꼴로 둔다. `body` 전체에 약간 조밀한 자간(`-0.015em`)이 적용된다.
-- `Geist`와 `Geist Mono`도 Next 폰트 변수로 불러오지만, 전역 본문 글꼴 선언은 Pretendard 계열이다. 새 UI는 특별한 근거가 없으면 Pretendard 계열을 따른다.
-- 화면 제목은 대체로 24px(`text-2xl`), 굵기 800, 타이트한 자간을 사용한다. 대시보드 시작 화면의 핵심 제목은 30–36px로 커진다.
-- 기본 폼 텍스트와 버튼은 14px 전후, 필드 레이블은 12px 전후의 세미볼드다. 설명·메타 정보는 12px 또는 11px로 낮은 대비를 유지한다.
-- 짧은 영문 섹션 라벨은 11px 굵은 대문자와 넓은 자간을 사용해 한국어 제목과 시각적으로 구분한다.
+Use **Pretendard GOV Variable** with the Korean-capable system sans-serif stack as fallback. The global letter spacing is slightly tight (`-0.015em`), giving Korean and Latin UI copy a compact, polished rhythm.
+
+- Page and modal titles are compact and strong: typically 24px extra-bold with tight tracking on account forms, and 18px bold in settings headers.
+- Panel headings and primary labels use bold or semibold weights to establish hierarchy without large type jumps.
+- Field labels and helper text are intentionally small (about 12px); standard control and supporting copy is generally 14px.
+- Secondary descriptions use muted slate and short line lengths. Avoid adding decorative display typography to otherwise functional account screens.
 
 ## 4. Component Stylings
 
-### Buttons
-
-- 주요 액션은 인디고 600에서 바이올렛 600으로 이어지는 수평 그라데이션과 흰 글자를 사용한다. 호버 시 양 끝 색을 한 단계 밝게 한다. 버튼은 은은한 인디고 그림자를 두고, 모서리는 둥근 직사각형(`rounded-xl`)으로 처리한다.
-- 취소·보조 액션은 밝은 슬레이트 표면과 얇은 슬레이트 테두리를 사용한다. 다크 모드에서는 슬레이트 800 계열로 바뀐다.
-- 아이콘 버튼과 상태 토글은 목적에 따라 `rounded-lg`에서 원형까지 사용한다. 호버 피드백은 배경색·글자색 전환과 작은 이동 또는 확대 정도로 제한한다.
-
-### Cards / Containers
-
-- 로그인·회원가입·비밀번호 재설정 카드는 `max-w-md`, 흰색 95% 투명도, `backdrop-blur-xl`, `rounded-3xl`, 슬레이트 경계선과 큰 저대비 그림자를 사용한다. 작은 화면에서 좌우 여백을 확보하고, 큰 화면에서는 내부 패딩을 32px에서 40px로 늘린다.
-- 대시보드 패널은 흰색 90% 투명도, 같은 블러, 큰 둥근 모서리, 미세한 경계선 및 약한 그림자로 겹침을 표현한다. 다크 모드 표면은 슬레이트 900 계열이다.
-- 설정 창은 최대 너비 512px의 `rounded-3xl` 대화상자다. 배경 오버레이는 짙은 슬레이트에 반투명도를 주고 블러 처리한다. 설정 그룹은 둥근 내부 컨테이너와 가는 테두리로 분리한다.
-- 깊이는 강한 부유감보다 넓고 흐린 그림자에 의존한다. 인증 카드와 주요 버튼은 대시보드 패널보다 그림자를 조금 더 강조한다.
-
-### Inputs / Forms
-
-- 입력창은 전체 너비, 연한 슬레이트 배경, 얇은 경계선, `rounded-xl`을 기본으로 한다. 아이콘이 있는 필드는 왼쪽에 16px 안쪽 여백을 두고, 텍스트 시작 위치는 아이콘 뒤로 맞춘다.
-- 입력 텍스트는 14px 세미볼드이며 플레이스홀더는 슬레이트 400 계열이다. 포커스 시 인디고 500 경계선과 약한 인디고 링을 표시하고, 배경은 흰색(다크 모드에서는 슬레이트 800)으로 바뀐다.
-- 필드 레이블은 왼쪽 정렬, 12px 세미볼드, 필드와 짧은 간격으로 배치한다. 오류 메시지는 로즈 계열의 옅은 배경·경계선·텍스트를 사용한다.
-
-### Icons, Status & Motion
-
-- 아이콘은 Lucide 선형 아이콘을 사용하며, 필드 아이콘은 보통 16px이다. 장식보다 입력 종류와 작업 의미를 빠르게 알아보게 하는 보조 역할이다.
-- 전환은 색상·불투명도·위치의 짧은 변화 위주다. 스크롤 가능한 긴 목록에는 얇은 커스텀 스크롤바를 적용한다.
+* **Buttons:** Primary actions use a left-to-right indigo-to-violet gradient (`#4F46E5` → `#7C3AED`), white semibold text, gently rounded corners (about 12px on form actions and 16px on dashboard actions), and a soft indigo shadow. Hover shifts the gradient slightly lighter; pressed states may scale down very subtly. Secondary actions use a pale slate fill with a light border. Destructive actions use rose red sparingly.
+* **Cards/Containers:** Main forms are centered, medium-width cards (`max-width: 28rem`) with generous padding, a large 24px radius, a fine border, and a diffused shadow. Dashboard panels use the same rounded, bordered surface language with restrained blur and lighter shadows. Settings is a wider dialog (`max-width: 32rem`) with a 24px radius, clipped contents, and a stronger shadow above a dimmed, softly blurred scrim.
+* **Inputs/Forms:** Inputs are full-width, about 56px high, with a pale slate fill, thin slate border, 12px corner radius, and compact leading icon. Labels sit just above each field. Focus changes the border to indigo and adds a faint indigo ring; dark mode raises the input surface to slate without changing the hierarchy.
+* **Icon treatments:** Use simple outline icons in muted slate for field affordances. Settings and account icons sit in small pale-indigo tiles, with indigo foregrounds. Keep icons subordinate to labels.
+* **Settings rows and badges:** Group settings in softly tinted, 16px-radius sections with thin borders. Interactive rows use smaller rounded corners and subtle surface changes on hover. Count, role, and version badges are compact pills or softly rounded chips in muted or pale accent colors.
+* **Conversation surfaces:** Dashboard message bubbles are rounded and differentiated by alignment and fill. User messages reuse the primary indigo-violet gradient; assistant content remains on a quiet slate surface with a fine border.
 
 ## 5. Layout Principles
 
-- 인증 화면은 뷰포트 중앙에 단일 폼 카드를 두고, 카드 폭은 최대 448px로 제한한다. 바깥쪽 패딩은 16px, 카드 내부는 기본 32px이며 `sm` 이상에서 40px로 넓어진다.
-- 회원가입은 같은 중앙 카드 안에 세로 필드를 촘촘하게 쌓는다. 화면 높이보다 콘텐츠가 길어질 수 있으므로 세로 공간은 최소 화면 높이로 잡으며, 별도의 내부 고정 스크롤은 지정하지 않는다.
-- 대시보드는 높이 100vh의 가로 작업 공간이다. 20px 외곽 여백과 패널 사이 간격을 두고, 대화 패널이 남은 폭을 차지하며 우측 프로필·파일 영역은 288px로 고정된다.
-- 대시보드 루트에 `overflow-hidden`과 고정 높이가 있고, 주요 패널 배치에 모바일용 열 전환/숨김 breakpoint가 없다. 따라서 모바일의 정상적인 재배치가 확인되지 않았으며, 모바일 대시보드 레이아웃은 이 문서에서 권장 패턴으로 제시하지 않는다. 실제 화면 검토 없이 지원되는 것으로 간주하지 않는다.
-- 설정 창은 뷰포트 중앙에 놓이고 가장자리 16px 여백을 유지한다. 내부 본문은 최대 뷰포트 높이의 75%에서 스크롤된다.
-- 여백은 인증·설정 화면에서 넉넉하게, 대시보드 목록과 설정 그룹 내부에서는 상대적으로 밀도 있게 사용한다. 모서리 체계는 작은 컨트롤 `rounded-lg`, 입력·버튼 `rounded-xl`, 내부 그룹 `rounded-2xl`, 주요 카드·패널 `rounded-3xl`, 상태 토글·아바타 `rounded-full` 순이다.
+Center account flows in the viewport and keep them within a readable medium-width column. Use consistent internal padding (32–40px on larger form cards), about 16px between form fields, and a little more separation between the title area, form, and footer links. Let the pale gradient canvas remain visible around the card.
 
-## Page Coverage Notes
+Settings uses a centered overlay dialog with viewport padding, a distinct header separated by a fine rule, and a vertically scrollable body. Sections have clear breathing room and their own grouped surfaces.
 
-- `/`: `LoginForm`을 중앙 인증 카드로 표시한다. 회사 일련번호·사원번호·비밀번호 입력과 주요 로그인 액션이 포함된다.
-- `/register`: 6개 입력 필드와 취소/확인 액션을 같은 인증 카드 패턴으로 구성한다.
-- `/reset-password`: 3개 입력 필드와 취소/확인 액션을 같은 인증 카드 패턴으로 구성한다.
-- `/dashboard`: 대화, 채팅방 사이드바, 프로필, 업로드 파일 패널이 결합된 데스크톱 작업 공간이다.
-- `/settings`: 독립 페이지 위에 설정 모달을 중앙 표시한다. 계정, 앱 설정, 보안 화면을 전환한다.
+The dashboard implementation uses a padded three-column workspace: a fixed-width conversation sidebar, a flexible chat area, and a fixed-width profile/file rail, separated by even gaps. Treat this as a layout example from `/`; at narrower widths the current implementation can squeeze the center column, so choose an explicit responsive adaptation when designing a new screen rather than copying that squeeze.
 
-## Source References
+## Evidence & Scope
 
-- 전역 글꼴·색상·스크롤바: `app/globals.css`, `app/layout.tsx`
-- 로그인: `app/page.tsx`, `components/LoginForm.tsx`
-- 회원가입: `app/register/page.tsx`, `components/RegisterForm.tsx`
-- 대시보드: `app/dashboard/page.tsx`, `components/DashboardForm.tsx`, `components/dashboard/ChatSidebar.tsx`, `components/dashboard/ChatPanel.tsx`, `components/dashboard/ProfileCard.tsx`, `components/dashboard/FileListPanel.tsx`
-- 설정: `app/settings/page.tsx`, `components/dashboard/SettingsModal.tsx`
-- 비밀번호 재설정: `app/reset-password/page.tsx`, `components/PasswordResetForm.tsx`
+This system was synthesized from the `/`, `/login`, `/settings`, and `/reset-pw` implementations and a browser review of their rendered states. `/reset-pw` refers to the email-request form only; the unfinished `PasswordResetForm` was excluded. The settings account lookup was not needed to establish visual patterns. No Stitch project or Stitch tools were available in this workspace, so the repository and local browser rendering served as the source material.
