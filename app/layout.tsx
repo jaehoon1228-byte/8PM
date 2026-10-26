@@ -25,11 +25,11 @@ export default function RootLayout({
                     crossOrigin="anonymous"
                     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
                 />
-                <script
+                {/* <script
                     dangerouslySetInnerHTML={{
                         __html: `try{if(localStorage.getItem("mes_pref_dark_mode")==="true"){document.documentElement.classList.add("dark")}}catch(e){}`,
                     }}
-                />
+                /> */}
             </head>
             <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-[#090d16] dark:text-slate-100">
                 {children}
