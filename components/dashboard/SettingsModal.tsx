@@ -11,7 +11,6 @@ import {
     Cpu,
     Info,
     KeyRound,
-    Lock,
     LogOut,
     Moon,
     RefreshCw,
@@ -54,7 +53,9 @@ export default function SettingsModal({
     const [darkMode, setDarkMode] = useState(false);
 
     // 2-2 보안 탭 상태
-    const [tokenState, setTokenState] = useState<"idle" | "checking" | "valid" | "expired">("idle");
+    const [tokenState, setTokenState] = useState<
+        "idle" | "checking" | "valid" | "expired"
+    >("idle");
     const [lastVerifiedAt, setLastVerifiedAt] = useState<string>("-");
     const [notifPermission, setNotifPermission] = useState<string>("default");
 
@@ -123,7 +124,7 @@ export default function SettingsModal({
     const handleLogout = async () => {
         if (!confirm("정말 로그아웃 하시겠습니까?")) return;
         await logout();
-        router.push("/");
+        router.push("/login");
     };
 
     const roleLabel = formatRoleLabel(userInfo?.role);
@@ -156,11 +157,14 @@ export default function SettingsModal({
                                 {view === "account" && "내 정보 관리"}
                                 {view === "security" && "비밀번호 및 보안"}
                             </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {view === "main" && "계정 정보, 알림 및 화면 테마를 관리합니다."}
-                                {view === "account" && "현재 로그인된 사원 계정 상세 프로필입니다."}
-                                {view === "security" && "JWT 인증 세션, 보안 토큰 및 기기 데이터를 관리합니다."}
-                            </p>
+                            {/* <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {view === "main" &&
+                                    "계정 정보, 알림 및 화면 테마를 관리합니다."}
+                                {view === "account" &&
+                                    "현재 로그인된 사원 계정 상세 프로필입니다."}
+                                {view === "security" &&
+                                    "JWT 인증 세션, 보안 토큰 및 기기 데이터를 관리합니다."}
+                            </p> */}
                         </div>
                     </div>
                     <button
@@ -197,14 +201,14 @@ export default function SettingsModal({
                                                     내 정보 관리
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    이름, 회사 일련번호, 사원번호, 이메일, 권한, 생성일자 확인
+                                                    내 정보를 확인할 수
+                                                    있습니다.
                                                 </p>
                                             </div>
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
-
-                                    <button
+                                    {/* <button
                                         type="button"
                                         onClick={() => setView("security")}
                                         className="w-full flex items-center justify-between p-3 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition text-left cursor-pointer group"
@@ -218,12 +222,13 @@ export default function SettingsModal({
                                                     비밀번호 및 보안
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    JWT 토큰 상태 검증, 로컬 데이터 초기화, 전체 세션 로그아웃
+                                                    계정의 보안 관련 설정을
+                                                    변경할 수 있습니다.
                                                 </p>
                                             </div>
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
 
@@ -243,7 +248,8 @@ export default function SettingsModal({
                                                     푸시 알림
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    질문 입력 후 다른 탭/작업 이동 시 AI 답변 완료 알림을 받습니다.
+                                                    답변이 완료되면 알림을
+                                                    받습니다.
                                                 </p>
                                             </div>
                                         </div>
@@ -258,7 +264,9 @@ export default function SettingsModal({
                                         >
                                             <div
                                                 className={`w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${
-                                                    notifications ? "translate-x-6" : "translate-x-0"
+                                                    notifications
+                                                        ? "translate-x-6"
+                                                        : "translate-x-0"
                                                 }`}
                                             />
                                         </button>
@@ -274,7 +282,7 @@ export default function SettingsModal({
                                                     다크 모드
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    눈의 피로를 줄이는 어두운 산업용 관제 테마로 전환합니다.
+                                                    어두운 테마로 전환합니다.
                                                 </p>
                                             </div>
                                         </div>
@@ -289,7 +297,9 @@ export default function SettingsModal({
                                         >
                                             <div
                                                 className={`w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${
-                                                    darkMode ? "translate-x-6" : "translate-x-0"
+                                                    darkMode
+                                                        ? "translate-x-6"
+                                                        : "translate-x-0"
                                                 }`}
                                             />
                                         </button>
@@ -312,7 +322,7 @@ export default function SettingsModal({
                                                 앱 버전 정보
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                MES AI ChatBot Web Enterprise
+                                                MES AI ChatBot Web
                                             </p>
                                         </div>
                                     </div>
@@ -337,9 +347,11 @@ export default function SettingsModal({
                     {/* 2-1. 내 정보 관리 뷰 */}
                     {view === "account" && (
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md">
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-md">
                                 <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl font-extrabold">
-                                    {userInfo?.username ? userInfo.username.charAt(0) : "사"}
+                                    {userInfo?.username
+                                        ? userInfo.username.charAt(0)
+                                        : "사"}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
@@ -351,13 +363,17 @@ export default function SettingsModal({
                                         </span>
                                     </div>
                                     <p className="text-xs text-indigo-100 mt-0.5">
-                                        {userInfo?.companyName ?? "MES 스마트팩토리"}
+                                        {userInfo?.companyName ??
+                                            "MES 스마트팩토리"}
                                     </p>
                                 </div>
                             </div>
 
                             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/40 dark:bg-slate-800/30">
-                                <ProfileRow label="이름" value={userInfo?.username ?? "-"} />
+                                <ProfileRow
+                                    label="이름"
+                                    value={userInfo?.username ?? "-"}
+                                />
                                 <ProfileRow
                                     label="회사 일련번호"
                                     value={
@@ -374,16 +390,25 @@ export default function SettingsModal({
                                             : "-"
                                     }
                                 />
-                                <ProfileRow label="이메일" value={userInfo?.email ?? "-"} />
+                                <ProfileRow
+                                    label="이메일"
+                                    value={userInfo?.email ?? "-"}
+                                />
                                 <ProfileRow
                                     label="권한 등급"
                                     value={roleLabel}
-                                    subValue={userInfo?.role ? `(${userInfo.role})` : undefined}
+                                    subValue={
+                                        userInfo?.role
+                                            ? `(${userInfo.role})`
+                                            : undefined
+                                    }
                                     highlight
                                 />
                                 <ProfileRow
                                     label="계정 생성일자"
-                                    value={formatCreatedDate(userInfo?.createdAt)}
+                                    value={formatCreatedDate(
+                                        userInfo?.createdAt,
+                                    )}
                                 />
                             </div>
                         </div>
@@ -408,23 +433,41 @@ export default function SettingsModal({
 
                                 <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 pt-1">
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">암호화 알고리즘</span>
-                                        <span className="font-medium">Argon2 + HMAC-SHA512 JWT</span>
+                                        <span className="text-slate-400">
+                                            암호화 알고리즘
+                                        </span>
+                                        <span className="font-medium">
+                                            Argon2 + HMAC-SHA512 JWT
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">Refresh 토큰 보관</span>
-                                        <span className="font-medium">HttpOnly 쿠키 + Redis 화이트리스트</span>
+                                        <span className="text-slate-400">
+                                            Refresh 토큰 보관
+                                        </span>
+                                        <span className="font-medium">
+                                            HttpOnly 쿠키 + Redis 화이트리스트
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">접속 권한 인가</span>
-                                        <span className="font-medium">{roleLabel}</span>
+                                        <span className="text-slate-400">
+                                            접속 권한 인가
+                                        </span>
+                                        <span className="font-medium">
+                                            {roleLabel}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">최근 접속 시각</span>
-                                        <span className="font-medium">{getLastLoginTimestamp()}</span>
+                                        <span className="text-slate-400">
+                                            최근 접속 시각
+                                        </span>
+                                        <span className="font-medium">
+                                            {getLastLoginTimestamp()}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">브라우저 알림 권한</span>
+                                        <span className="text-slate-400">
+                                            브라우저 알림 권한
+                                        </span>
                                         <span className="font-medium">
                                             {notifPermission === "granted"
                                                 ? "허용됨"
@@ -446,7 +489,9 @@ export default function SettingsModal({
                                                 Access Token 실시간 유효성 점검
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                백엔드 서버와 통신하여 현재 인증 토큰 및 자동 재발급 상태를 즉시 검증합니다.
+                                                백엔드 서버와 통신하여 현재 인증
+                                                토큰 및 자동 재발급 상태를 즉시
+                                                검증합니다.
                                             </p>
                                         </div>
                                     </div>
@@ -458,7 +503,9 @@ export default function SettingsModal({
                                     >
                                         <RefreshCw
                                             className={`w-3.5 h-3.5 ${
-                                                tokenState === "checking" ? "animate-spin" : ""
+                                                tokenState === "checking"
+                                                    ? "animate-spin"
+                                                    : ""
                                             }`}
                                         />
                                         <span>점검</span>
@@ -477,7 +524,8 @@ export default function SettingsModal({
                                     >
                                         <span className="flex items-center gap-1.5 font-medium">
                                             <CheckCircle2 className="w-3.5 h-3.5" />
-                                            {tokenState === "checking" && "백엔드 인증 서버 확인 중..."}
+                                            {tokenState === "checking" &&
+                                                "백엔드 인증 서버 확인 중..."}
                                             {tokenState === "valid" &&
                                                 "정상: Access Token 및 Refresh 쿠키가 유효합니다."}
                                             {tokenState === "expired" &&
@@ -500,7 +548,9 @@ export default function SettingsModal({
                                             브라우저 로컬 작업 캐시 초기화
                                         </p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                            공용 작업장 PC 사용 시 이 브라우저에 남은 대화방/파일 목록 캐시를 즉시 삭제합니다.
+                                            공용 작업장 PC 사용 시 이 브라우저에
+                                            남은 대화방/파일 목록 캐시를 즉시
+                                            삭제합니다.
                                         </p>
                                     </div>
                                 </div>
@@ -521,7 +571,10 @@ export default function SettingsModal({
                                 className="w-full py-3.5 px-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
                             >
                                 <LogOut className="w-4 h-4" />
-                                <span>서버 Refresh Token 폐기 및 즉시 보안 로그아웃</span>
+                                <span>
+                                    서버 Refresh Token 폐기 및 즉시 보안
+                                    로그아웃
+                                </span>
                             </button>
                         </div>
                     )}
@@ -544,7 +597,9 @@ function ProfileRow({
 }) {
     return (
         <div className="flex items-center justify-between px-4 py-3.5 text-sm">
-            <span className="text-slate-500 dark:text-slate-400 font-medium">{label}</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium">
+                {label}
+            </span>
             <div className="text-right">
                 <span
                     className={

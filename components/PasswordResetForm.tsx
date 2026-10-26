@@ -1,127 +1,143 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { baseUrl } from "@/utils/api";
+import ky, { isHTTPError } from "ky";
+import Form from "next/form";
 import { useState } from "react";
-import { Building2, IdCard, KeyRound, Mail } from "lucide-react";
+import BadRequest from "./BadRequest";
+import { useRouter } from "next/navigation";
 
-export default function PasswordResetForm() {
-    const router = useRouter();
-    const [employeeId, setEmployeeId] = useState("");
-    const [companyEmail, setCompanyEmail] = useState("");
-    const [companycode, setCompanyCode] = useState("");
+type PasswordResetRequestData = {
+    password: string;
+    passwordRepeat: string;
+};
+type BadRequestType = "missing" | "notMatch" | undefined;
 
-    const handleCancel = () => {
-        router.push("/");
+/**
+ * 비밀번호 재설정을 처리하는 함수.
+ * @param formData Next.js Form에서 자동 주입됨.
+ * @param token 재설정 페이지 토큰.
+ * @param handleBadRequest 요청 오류 시 수행할 동작.
+ */
+async function handleSubmit(
+    formData: FormData,
+    token: string,
+    handleBadRequest: (status: BadRequestType) => void,
+): Promise<{ ok: boolean; message: string }> {
+    // FormData에서 필드 추출.
+    const data: PasswordResetRequestData = {
+        password: formData.get("password")?.toString() ?? "",
+        passwordRepeat: formData.get("passwordRepeat")?.toString() ?? "",
     };
 
-    const handleConfirm = () => {
-        if (!companycode.trim()) {
-            alert("회사일련번호를 입력하세요.");
-            return;
+    // 비밀번호가 제공되지 않으면 오류 표시
+    if (!data.password || !data.passwordRepeat) {
+        handleBadRequest("missing");
+    }
+    // 두 비밀번호가 일치하지 않으면 오류 표시
+    if (data.password !== data.passwordRepeat) {
+        handleBadRequest("notMatch");
+    }
+
+    // 요청 바디 조립
+    const requestBody = { token, newPassword: data.password };
+
+    // 백엔드에 비밀번호 재설정 요청
+    try {
+        const request = await ky.post("/api/v1/password/update", {
+            baseUrl,
+            json: requestBody,
+        });
+
+        // 성공 시 응답 메시지와 함께 true 반환
+        if (request.ok) {
+            return { ok: request.ok, message: await request.text() };
         }
-        if (!employeeId.trim()) {
-            alert("사원번호를 입력하세요.");
-            return;
+    } catch (e) {
+        // 400 시 오류 처리
+        if (isHTTPError(e) && e.response.status === 400) {
+            return { ok: false, message: await e.response.text() };
         }
-        if (!companyEmail.trim()) {
-            alert("사내 이메일을 입력하세요.");
-            return;
-        }
-        console.log(
-            "회사일련번호: ",
-            companycode,
-            "사원번호: ",
-            employeeId,
-            "사내 이메일: ",
-            companyEmail,
-        );
-        alert("비밀번호 재설정 안내 메일이 발송되었습니다.");
-        router.push("/");
+    }
+
+    // 그 외 알 수 없는 오류 처리
+    return { ok: false, message: "Unknown error" };
+}
+
+export default function PasswordResetForm({ token }: { token: string }) {
+    /**
+     * Next.js 클라이언트 라우터
+     */
+    const router = useRouter();
+    /**
+     * 요청 오류 상태를 담는 State
+     */
+    const [badRequest, setBadRequest] = useState<BadRequestType>(undefined);
+
+    // 오류 표시 처리 함수
+    const handleBadRequest = (status: BadRequestType) => {
+        setBadRequest(status as BadRequestType);
     };
 
     return (
-        <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 transition-colors">
-            <div className="flex flex-col items-center text-center mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-4">
-                    <KeyRound className="w-6 h-6" />
-                </div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                    MES Account Recovery
-                </span>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-                    비밀번호 설정
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    등록된 사원 정보와 사내 이메일을 입력하여 인증을 진행하세요.
-                </p>
-            </div>
+        <div className="w-full max-w-xl bg-main rounded-3xl p-12 sm:p-16 shadow-2xl">
+            <h1 className="text-3xl font-bold text-center text-white mb-10">
+                비밀번호 재설정
+            </h1>
 
-            <div className="space-y-4">
-                <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300 ml-1">
-                        회사일련번호를 입력하세요.
-                    </label>
-                    <div className="relative flex items-center">
-                        <Building2 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+            {/* badRequest 상태에 따라 오류 메시지 표시 */}
+            {badRequest === "missing" ? (
+                <BadRequest message="비밀번호를 입력하세요." />
+            ) : badRequest === "notMatch" ? (
+                <BadRequest message="두 비밀번호가 일치하지 않습니다." />
+            ) : undefined}
+
+            {/* 비밀번호 재설정 폼 */}
+            <Form
+                className="space-y-6"
+                action={async (formData) => {
+                    // 요청 전송
+                    const result = await handleSubmit(
+                        formData,
+                        token,
+                        handleBadRequest,
+                    );
+
+                    // 성공 시 페이지 이동
+                    if (result.ok) {
+                        router.push("/reset-pw/success?type=reset-success");
+                    } else {
+                        handleBadRequest("missing");
+                    }
+                }}
+            >
+                <div className="flex flex-col gap-12">
+                    <div className="flex flex-col gap-5">
                         <input
-                            type="text"
-                            value={companycode}
-                            onChange={(e) => setCompanyCode(e.target.value)}
-                            placeholder="회사일련번호"
-                            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
+                            required
+                            type="password"
+                            name="password"
+                            id="password"
+                            placeholder="비밀번호"
+                            className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"
+                        />
+                        <input
+                            required
+                            type="password"
+                            name="passwordRepeat"
+                            id="passwordRepeat"
+                            placeholder="비밀번호 재입력"
+                            className="w-full px-6 py-4 bg-transparent border border-white/70 rounded-lg text-white placeholder-white/80 focus:outline-none focus:border-white text-sm"
                         />
                     </div>
-                </div>
-
-                <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300 ml-1">
-                        사원번호를 입력하세요.
-                    </label>
-                    <div className="relative flex items-center">
-                        <IdCard className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
-                        <input
-                            type="text"
-                            value={employeeId}
-                            onChange={(e) => setEmployeeId(e.target.value)}
-                            placeholder="사원번호"
-                            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300 ml-1">
-                        사내 이메일을 입력하세요.
-                    </label>
-                    <div className="relative flex items-center">
-                        <Mail className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
-                        <input
-                            type="email"
-                            value={companyEmail}
-                            onChange={(e) => setCompanyEmail(e.target.value)}
-                            placeholder="사내 이메일"
-                            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
                     <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm transition cursor-pointer"
+                        type="submit"
+                        className="w-full py-4 bg-white text-main font-bold rounded-lg hover:bg-opacity-90 transition-all text-sm cursor-pointer"
                     >
-                        취소
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleConfirm}
-                        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 transition cursor-pointer"
-                    >
-                        확인
+                        변경
                     </button>
                 </div>
-            </div>
+            </Form>
         </div>
     );
 }

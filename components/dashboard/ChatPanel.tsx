@@ -85,15 +85,17 @@ export default function ChatPanel({
         <main className="flex-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors">
             {!currentChat ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2">
+                    {/* <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2">
                         MES AI Smart Factory Assistant
-                    </span>
+                    </span> */}
                     <h1 className="text-slate-900 dark:text-white text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
                         {companyName ?? "한국제조 스마트팩토리"}
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mb-8 leading-relaxed">
-                        공정 실적, 설비 가동률(OEE), 품질 불량 데이터 및 사내 문서를 기반으로
-                        AI가 실시간 분석 답변을 제공합니다.
+                        {/* 공정 실적, 설비 가동률(OEE), 품질 불량 데이터 및 사내
+                        문서를 기반으로 AI가 실시간 분석 답변을 제공합니다. */}
+                        무엇이든 물어보세요. 자료를 기반으로 답변을 제공해
+                        드립니다.
                     </p>
 
                     <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl">
@@ -150,7 +152,7 @@ export default function ChatPanel({
                                     <div
                                         className={`px-4 py-3 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap wrap-break-word ${
                                             isUser
-                                                ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-tr-xs shadow-md shadow-indigo-500/15"
+                                                ? "bg-linear-to-br from-indigo-600 to-violet-600 text-white rounded-tr-xs shadow-md shadow-indigo-500/15"
                                                 : "bg-slate-100/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200/70 dark:border-slate-700/70"
                                         }`}
                                     >
@@ -169,7 +171,8 @@ export default function ChatPanel({
                                 <Bot className="w-4 h-4" />
                             </div>
                             <div className="max-w-md px-4 py-3 rounded-2xl rounded-tl-xs text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/70 dark:border-slate-700/70 animate-pulse">
-                                MES 데이터를 분석하여 답변을 생성하고 있습니다...
+                                MES 데이터를 분석하여 답변을 생성하고
+                                있습니다...
                             </div>
                         </div>
                     )}
@@ -196,7 +199,7 @@ export default function ChatPanel({
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="공정 데이터, 설비 효율, 품질 현황 등 무엇이든 물어보세요..."
+                        placeholder="무엇이든 물어보세요..."
                         className="w-full bg-slate-100/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-2xl py-3.5 pl-5 pr-13 text-sm font-medium outline-none border border-slate-200/90 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 transition-all resize-none overflow-y-auto max-h-40 custom-scrollbar"
                     />
                     <button

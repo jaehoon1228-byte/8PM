@@ -28,15 +28,15 @@ export default function ChatSidebar({
                 <p className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                     MES AI Assistant
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                {/* <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                     Smart Factory Intelligence
-                </p>
+                </p> */}
             </div>
 
             <button
                 type="button"
                 onClick={onNewChat}
-                className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-500/20 mb-6 cursor-pointer active:scale-[0.99]"
+                className="w-full bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-500/20 mb-6 cursor-pointer active:scale-[0.99]"
             >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>새 채팅 시작</span>
@@ -44,7 +44,9 @@ export default function ChatSidebar({
 
             <div className="flex items-center justify-between text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-3 px-2">
                 <span>채팅 내역</span>
-                <span className="text-[11px] font-semibold">{chatSessions.length}</span>
+                <span className="text-[11px] font-semibold">
+                    {chatSessions.length}
+                </span>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
@@ -77,7 +79,9 @@ export default function ChatSidebar({
                                                 : "text-slate-400 dark:text-slate-500"
                                         }`}
                                     />
-                                    <span className="truncate">{session.title}</span>
+                                    <span className="truncate">
+                                        {session.title}
+                                    </span>
                                 </div>
 
                                 <button

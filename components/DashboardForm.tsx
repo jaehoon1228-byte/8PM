@@ -67,7 +67,9 @@ const STORAGE_KEYS = {
     files: (empId: number) => `mes_uploaded_files_${empId}`,
 };
 
-export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: DashboardFormProps) {
+export default function DashboardForm({
+    initialData = EMPTY_INITIAL_DATA,
+}: DashboardFormProps) {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,7 +80,9 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
     const [chatSessions, setChatSessions] = useState<ChatSession[]>(
         initialData.chatSessions ?? [],
     );
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(initialData.files ?? []);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+        initialData.files ?? [],
+    );
 
     // ---------------- 클라이언트 UI 상태 (CSR) ----------------
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -113,24 +117,35 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
     const hydrateFromStorage = (employeeId: number) => {
         if (storageHydratedRef.current) return;
         try {
-            const savedSessions = localStorage.getItem(STORAGE_KEYS.sessions(employeeId));
+            const savedSessions = localStorage.getItem(
+                STORAGE_KEYS.sessions(employeeId),
+            );
             if (savedSessions) {
                 const parsed = JSON.parse(savedSessions) as ChatSession[];
                 setChatSessions((prev) => {
                     const existingIds = new Set(prev.map((s) => s.id));
                     const restored = parsed
-                        .filter((s) => !s.id.startsWith("temp-") && !existingIds.has(s.id))
+                        .filter(
+                            (s) =>
+                                !s.id.startsWith("temp-") &&
+                                !existingIds.has(s.id),
+                        )
                         .map((s) => ({ ...s, messages: [], isLoaded: false }));
                     return [...prev, ...restored];
                 });
             }
 
-            const savedFiles = localStorage.getItem(STORAGE_KEYS.files(employeeId));
+            const savedFiles = localStorage.getItem(
+                STORAGE_KEYS.files(employeeId),
+            );
             if (savedFiles) {
                 const parsed = JSON.parse(savedFiles) as UploadedFile[];
                 setUploadedFiles((prev) => {
                     const existingIds = new Set(prev.map((f) => f.id));
-                    return [...prev, ...parsed.filter((f) => !existingIds.has(f.id))];
+                    return [
+                        ...prev,
+                        ...parsed.filter((f) => !existingIds.has(f.id)),
+                    ];
                 });
             }
         } catch (error) {
@@ -149,15 +164,19 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
         if (isSessionExpired(error)) {
             if (!isRedirectingRef.current) {
                 isRedirectingRef.current = true;
-                alert("세션이 만료되었습니다. 다시 로그인해주세요.");
-                router.push("/");
+                // alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+                router.push("/login");
             }
             return true;
         }
 
         const detailMessage = await extractErrorMessage(error, fallbackMessage);
         if (isHTTPError(error)) {
-            console.error(fallbackMessage, error.response.status, detailMessage);
+            console.error(
+                fallbackMessage,
+                error.response.status,
+                detailMessage,
+            );
         } else {
             console.error(fallbackMessage, error);
         }
@@ -189,7 +208,11 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                         }
                     })
                     .catch((err) => {
-                        if (!ignore) void handleApiError(err, "사용자 정보 조회에 실패했습니다.");
+                        if (!ignore)
+                            void handleApiError(
+                                err,
+                                "사용자 정보 조회에 실패했습니다.",
+                            );
                     }),
             );
         }
@@ -199,13 +222,24 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                     .then((data) => {
                         if (!ignore && data.length > 0) {
                             setChatSessions((prev) => {
-                                const existingIds = new Set(data.map((s) => s.id));
-                                return [...prev.filter((c) => !existingIds.has(c.id)), ...data];
+                                const existingIds = new Set(
+                                    data.map((s) => s.id),
+                                );
+                                return [
+                                    ...prev.filter(
+                                        (c) => !existingIds.has(c.id),
+                                    ),
+                                    ...data,
+                                ];
                             });
                         }
                     })
                     .catch((err) => {
-                        if (!ignore) void handleApiError(err, "채팅 목록 조회에 실패했습니다.");
+                        if (!ignore)
+                            void handleApiError(
+                                err,
+                                "채팅 목록 조회에 실패했습니다.",
+                            );
                     }),
             );
         }
@@ -222,7 +256,12 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
         try {
             const persistableSessions = chatSessions
                 .filter((s) => !s.id.startsWith("temp-"))
-                .map(({ id, title }) => ({ id, title, messages: [], isLoaded: false }));
+                .map(({ id, title }) => ({
+                    id,
+                    title,
+                    messages: [],
+                    isLoaded: false,
+                }));
             localStorage.setItem(
                 STORAGE_KEYS.sessions(userInfo.employeeId),
                 JSON.stringify(persistableSessions),
@@ -270,12 +309,20 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
             setChatSessions((prev) =>
                 prev.map((chat) =>
                     chat.id === id
-                        ? { ...chat, messages: [...messages, ...chat.messages], isLoaded: true }
+                        ? {
+                              ...chat,
+                              messages: [...messages, ...chat.messages],
+                              isLoaded: true,
+                          }
                         : chat,
                 ),
             );
         } catch (error) {
-            await handleApiError(error, "대화 내역을 불러오지 못했습니다.", true);
+            await handleApiError(
+                error,
+                "대화 내역을 불러오지 못했습니다.",
+                true,
+            );
         } finally {
             loadingChatIdsRef.current.delete(id);
             setLoadingChatId((prev) => (prev === id ? null : prev));
@@ -358,7 +405,9 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                             : chat,
                     ),
                 );
-                setActiveChatId((prev) => (prev === localChatId ? created.id : prev));
+                setActiveChatId((prev) =>
+                    prev === localChatId ? created.id : prev,
+                );
                 setSendingChatId(created.id);
             } else {
                 const found = chatSessions.find((c) => c.id === localChatId);
@@ -392,7 +441,10 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                 });
             }
         } catch (error) {
-            const expired = await handleApiError(error, "메시지 전송에 실패했습니다.");
+            const expired = await handleApiError(
+                error,
+                "메시지 전송에 실패했습니다.",
+            );
             if (!expired) {
                 const errorMsg: Message = {
                     id: `err-${Date.now()}`,
@@ -403,7 +455,10 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                 setChatSessions((prev) =>
                     prev.map((chat) =>
                         chat.id === targetSessionId
-                            ? { ...chat, messages: [...chat.messages, errorMsg] }
+                            ? {
+                                  ...chat,
+                                  messages: [...chat.messages, errorMsg],
+                              }
                             : chat,
                     ),
                 );
@@ -432,7 +487,9 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                 setUploadedFiles((prev) => [...uploaded, ...prev]);
             }
             if (failed.length > 0) {
-                const summary = failed.map((f) => `- ${f.name}: ${f.reason}`).join("\n");
+                const summary = failed
+                    .map((f) => `- ${f.name}: ${f.reason}`)
+                    .join("\n");
                 alert(`일부 파일 업로드에 실패했습니다.\n${summary}`);
             }
         } catch (error) {
@@ -470,7 +527,7 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
     };
 
     return (
-        <div className="flex h-screen w-full bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-5 gap-5 relative overflow-hidden font-sans box-border transition-colors">
+        <div className="flex h-screen w-full bg-linear-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-5 gap-5 relative overflow-hidden box-border transition-colors">
             <input
                 type="file"
                 ref={fileInputRef}
@@ -523,8 +580,12 @@ export default function DashboardForm({ initialData = EMPTY_INITIAL_DATA }: Dash
                 currentChat={currentChat}
                 companyName={userInfo?.companyName}
                 isSending={sendingChatId !== null}
-                isWaitingReply={sendingChatId !== null && sendingChatId === activeChatId}
-                isLoadingMessages={loadingChatId !== null && loadingChatId === activeChatId}
+                isWaitingReply={
+                    sendingChatId !== null && sendingChatId === activeChatId
+                }
+                isLoadingMessages={
+                    loadingChatId !== null && loadingChatId === activeChatId
+                }
                 resetKey={resetKey}
                 onSend={handleSend}
                 onOpenFilePicker={handleOpenFilePicker}

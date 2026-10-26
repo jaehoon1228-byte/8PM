@@ -49,7 +49,7 @@ export default function UserProfile() {
             // 2. 백엔드 처리 성공 여부와 상관없이 프론트엔드 스토리지 비우기 및 이동
             localStorage.removeItem("accessToken");
             alert("로그아웃 되었습니다.");
-            router.push("/");
+            router.push("/login");
         }
     };
 
@@ -59,7 +59,7 @@ export default function UserProfile() {
         <div className="relative inline-block text-left">
             <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold text-lg flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                className="w-11 h-11 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 text-white font-bold text-lg flex items-center justify-center shadow-md hover:scale-105 transition-transform"
             >
                 {userInfo ? userInfo.username.charAt(0) : "?"}
             </button>

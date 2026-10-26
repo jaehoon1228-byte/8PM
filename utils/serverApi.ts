@@ -67,7 +67,10 @@ async function safe<T>(
     } catch (error) {
         if (isHTTPError(error)) {
             // 아직 백엔드 컨트롤러에 미구현된 엔드포인트(404/405)는 조용히 빈 값으로 처리
-            if (optional && (error.response.status === 404 || error.response.status === 405)) {
+            if (
+                optional &&
+                (error.response.status === 404 || error.response.status === 405)
+            ) {
                 return null;
             }
             console.error(`[SSR] ${label} 조회 실패:`, error.response.status);
@@ -111,9 +114,11 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
         safe(
             "대화방 목록",
             async () =>
-                (await client.get(ENDPOINTS.chatSessions).json<ChatSessionResponseDto[]>()).map(
-                    toChatSession,
-                ),
+                (
+                    await client
+                        .get(ENDPOINTS.chatSessions)
+                        .json<ChatSessionResponseDto[]>()
+                ).map(toChatSession),
             true,
         ),
     ]);

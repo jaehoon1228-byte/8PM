@@ -65,7 +65,7 @@ export default function RegisterForm() {
 
     const handleCancel = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        router.push("/");
+        router.push("/login");
     };
 
     if (isSubmitted) {
@@ -76,10 +76,10 @@ export default function RegisterForm() {
         "w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all";
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-4 transition-colors">
+        <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-4 transition-colors">
             <div className="w-full max-w-md rounded-3xl bg-white/95 dark:bg-slate-900/95 p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
                 <div className="flex flex-col items-center text-center mb-7">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-3">
                         <UserPlus className="w-6 h-6" />
                     </div>
                     <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
@@ -204,7 +204,7 @@ export default function RegisterForm() {
 
                         <button
                             type="submit"
-                            className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 py-3 font-semibold text-sm text-white shadow-lg shadow-indigo-500/25 transition cursor-pointer"
+                            className="flex-1 rounded-xl bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 py-3 font-semibold text-sm text-white shadow-lg shadow-indigo-500/25 transition cursor-pointer"
                         >
                             확인
                         </button>

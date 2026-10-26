@@ -12,7 +12,10 @@ interface ProfileCardProps {
     onOpenSettings: () => void;
 }
 
-export default function ProfileCard({ userInfo, onOpenSettings }: ProfileCardProps) {
+export default function ProfileCard({
+    userInfo,
+    onOpenSettings,
+}: ProfileCardProps) {
     const initial = userInfo?.username ? userInfo.username.charAt(0) : "사";
     const roleLabel = formatRoleLabel(userInfo?.role);
 
@@ -45,7 +48,7 @@ export default function ProfileCard({ userInfo, onOpenSettings }: ProfileCardPro
                     e.stopPropagation();
                     onOpenSettings();
                 }}
-                className="relative w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform shrink-0 cursor-pointer"
+                className="relative w-11 h-11 rounded-full bg-linear-to-tr from-indigo-600 to-violet-500 text-white font-bold text-base flex items-center justify-center shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform shrink-0 cursor-pointer"
                 title="계정 정보 · 앱 설정 · 기타"
             >
                 <span>{initial}</span>
