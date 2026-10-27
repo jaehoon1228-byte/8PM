@@ -171,8 +171,7 @@ export default function ChatPanel({
                                 <Bot className="w-4 h-4" />
                             </div>
                             <div className="max-w-md px-4 py-3 rounded-2xl rounded-tl-xs text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/70 dark:border-slate-700/70 animate-pulse">
-                                MES 데이터를 분석하여 답변을 생성하고
-                                있습니다...
+                                답변을 생성하는 중...
                             </div>
                         </div>
                     )}
@@ -188,7 +187,7 @@ export default function ChatPanel({
                     type="button"
                     onClick={onOpenFilePicker}
                     className="p-3.5 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl transition-colors border border-slate-200/80 dark:border-slate-700 flex items-center justify-center cursor-pointer shrink-0"
-                    title="분석용 문서 첨부 (.pdf, .docx, .xlsx, .pptx, .csv)"
+                    title="문서 업로드 (.pdf, .docx, .xlsx, .pptx, .csv)"
                 >
                     <Paperclip className="w-5 h-5" />
                 </button>
