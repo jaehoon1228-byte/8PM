@@ -57,7 +57,7 @@ export interface ChatSessionResponseDto {
     companyId: number;
     employeeId: number;
     sessionTitle: string;
-    createdAt: string; // LocalDateTime ISO 문자열
+    createdAt: Date; // LocalDateTime ISO 문자열
 }
 
 /** ChatController POST /api/v1/chat/sessions/{sessionId}/ask 요청 (UserQuestionDto) */
@@ -72,7 +72,7 @@ export interface AskResponseDto {
     employeeId: number;
     sessionId: string;
     message: string;
-    recordedAt: string;
+    recordedAt: Date;
     role: "user" | "assistant" | string;
 }
 
@@ -81,7 +81,7 @@ export interface ChatHistoryDto {
     chatId: string;
     id?: string;
     message: string;
-    recordedAt: string;
+    recordedAt: Date;
     role: "user" | "assistant" | string;
 }
 
@@ -90,7 +90,7 @@ export interface FileMetadataDto {
     fileId: string;
     originName: string;
     fileType: string;
-    uploadedAt: string;
+    uploadedAt: Date;
 }
 
 /** FileController POST /api/v1/files/upload 응답 (FileUploadResponseDto) */
@@ -104,5 +104,5 @@ export interface FileUploadResponseDto {
 export interface FileDeleteResponseDto {
     fileId: string | null;
     message: string;
-    deletedAt: string | null;
+    deletedAt: Date | null;
 }

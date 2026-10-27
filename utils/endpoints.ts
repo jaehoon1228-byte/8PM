@@ -32,6 +32,7 @@ export const ENDPOINTS = {
     askToLlm: (sessionId: string) =>
         `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}/ask`, // POST: LLM 질문
     // FileController (@RequestMapping("/api/v1/files"))
+    files: "/api/v1/files",
     uploadFile: "/api/v1/files/upload", // POST: multipart/form-data (@RequestPart("file"))
     deleteFile: (fileId: string) =>
         `/api/v1/files/delete/${encodeURIComponent(fileId)}`, // DELETE: 파일 삭제
@@ -40,7 +41,10 @@ export const ENDPOINTS = {
 export function formatTime(dateInput: Date | string | undefined): string {
     const date = dateInput ? new Date(dateInput) : new Date();
     if (Number.isNaN(date.getTime())) {
-        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        return new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
     }
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }

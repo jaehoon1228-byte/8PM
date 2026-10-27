@@ -10,9 +10,15 @@ import { cookies } from "next/headers";
 import type {
     ChatSessionResponseDto,
     DashboardInitialData,
+    FileMetadataDto,
     UserInfo,
 } from "@/types/dashboard";
-import { BACKEND_BASE_URL, ENDPOINTS, toChatSession } from "@/utils/endpoints";
+import {
+    BACKEND_BASE_URL,
+    ENDPOINTS,
+    toChatSession,
+    toUploadedFile,
+} from "@/utils/endpoints";
 
 // 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소 사용)
 const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST ?? BACKEND_BASE_URL;
@@ -109,7 +115,7 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
     if (auth.status === "no-cookie") return { status: "ok", data: empty };
 
     const { client } = auth;
-    const [userInfo, chatSessions] = await Promise.all([
+    const [userInfo, chatSessions, files] = await Promise.all([
         safe("사용자 정보", () => client.get(ENDPOINTS.me).json<UserInfo>()),
         safe(
             "대화방 목록",
@@ -121,6 +127,14 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
                 ).map(toChatSession),
             true,
         ),
+        safe(
+            "파일 목록",
+            async () =>
+                (
+                    await client.get(ENDPOINTS.files).json<FileMetadataDto[]>()
+                ).map(toUploadedFile),
+            true,
+        ),
     ]);
 
     return {
@@ -129,7 +143,7 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
             userInfo,
             // 대화방 목록 조회 API 가 아직 미구현(null)이더라도 빈 배열을 내려 불필요한 CSR 재요청 방지
             chatSessions: chatSessions ?? [],
-            files: [],
+            files: files ?? [],
         },
     };
 }
