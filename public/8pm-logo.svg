@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Deep Navy to Electric Blue for 8pm -->
+    <linearGradient id="brandBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#005288" />
+      <stop offset="100%" stop-color="#002d54" />
+    </linearGradient>
+
+    <!-- Vibrant Mint/Aqua gradient for nx -->
+    <linearGradient id="brandMint" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2fe0d2" />
+      <stop offset="100%" stop-color="#00bcd4" />
+    </linearGradient>
+
+    <!-- Subtle drop shadow -->
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#001830" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <g filter="url(#logoShadow)">
+    <!-- 8 -->
+    <circle cx="58" cy="52" r="21" stroke="url(#brandBlue)" stroke-width="14" fill="none" />
+    <circle cx="58" cy="88" r="23" stroke="url(#brandBlue)" stroke-width="14" fill="none" />
+
+    <!-- p -->
+    <!-- Straight stem extending down below baseline -->
+    <rect x="114" y="34" width="14" height="88" rx="7" fill="url(#brandBlue)" />
+    <!-- Round bowl for p -->
+    <circle cx="154" cy="66" r="27" stroke="url(#brandBlue)" stroke-width="14" fill="none" />
+
+    <!-- m -->
+    <!-- Left vertical stem -->
+    <rect x="206" y="35" width="14" height="66" rx="7" fill="url(#brandBlue)" />
+    <!-- First arch -->
+    <path d="M 213 65 C 213 36, 256 36, 256 65 L 256 94" stroke="url(#brandBlue)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <!-- Second arch -->
+    <path d="M 256 65 C 256 36, 299 36, 299 65 L 299 94" stroke="url(#brandBlue)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- n (Mint) -->
+    <!-- Left stem -->
+    <rect x="345" y="35" width="14" height="66" rx="7" fill="url(#brandMint)" />
+    <!-- Arch -->
+    <path d="M 352 65 C 352 36, 396 36, 396 65 L 396 94" stroke="url(#brandMint)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- x (Mint) -->
+    <!-- Diagonal Stroke 1 (\) -->
+    <line x1="430" y1="38" x2="488" y2="96" stroke="url(#brandMint)" stroke-width="14" stroke-linecap="round" />
+    <!-- Diagonal Stroke 2 (/) -->
+    <line x1="488" y1="38" x2="430" y2="96" stroke="url(#brandMint)" stroke-width="14" stroke-linecap="round" />
+  </g>
+</svg>

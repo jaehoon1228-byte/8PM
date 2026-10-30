@@ -1,21 +1,51 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-gov.min.css");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov-dynamic-subset.min.css");
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+}
+
+.dark {
+    --background: #090d16;
+    --foreground: #f1f5f9;
+}
 
 @theme inline {
     --color-main: #8c9af3;
     --color-light: #d8deff;
     --color-lighter: #f3f5ff;
-
-    --font-admin:
-        "Pretendard GOV Variable", "Pretendard GOV", -apple-system,
-        BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
-        "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic",
-        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: "Pretendard GOV", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
+body {
+    background: var(--background);
+    color: var(--foreground);
+    letter-spacing: -0.015em;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+/* 세련된 커스텀 스크롤바 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.6);
 }
