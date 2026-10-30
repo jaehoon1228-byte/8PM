@@ -15,7 +15,7 @@ export default function AdminPageContent({
     pageType: PageType;
 }) {
     return (
-        <div className="font-admin flex h-dvh flex-col">
+        <div className="flex h-dvh flex-col">
             <AdminPageNavBar page={pageType} />
             <div className="border-y border-white md:hidden" />
             <div className="flex h-full flex-col items-center justify-center">
