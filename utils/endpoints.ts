@@ -33,9 +33,9 @@ export const ENDPOINTS = {
         `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}/ask`, // POST: LLM 질문
     // FileController (@RequestMapping("/api/v1/files"))
     files: "/api/v1/files",
-    uploadFile: "/api/v1/files/upload", // POST: multipart/form-data (@RequestPart("file"))
+    uploadFile: "/api/v1/files", // POST: multipart/form-data (@RequestPart("file"))
     deleteFile: (fileId: string) =>
-        `/api/v1/files/delete/${encodeURIComponent(fileId)}`, // DELETE: 파일 삭제
+        `/api/v1/files/${encodeURIComponent(fileId)}`, // DELETE: 파일 삭제
 } as const;
 
 export function formatTime(dateInput: Date | string | undefined): string {
