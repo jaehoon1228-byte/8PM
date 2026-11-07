@@ -992,66 +992,69 @@ export default function AdminDashboard({
                         </div>
 
                         <div className="p-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {registeredCompanies.map((company) => {
-                                    const isSelected =
-                                        company.companyId === activeCompanyId;
-                                    return (
-                                        <button
-                                            key={company.companyId}
-                                            type="button"
-                                            onClick={() =>
-                                                handleSelectCompany(
-                                                    company.companyId,
-                                                )
-                                            }
-                                            className={`text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                                                isSelected
-                                                    ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 dark:border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm"
-                                                    : "border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700"
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3.5 min-w-0">
-                                                <div
-                                                    className={`p-3 rounded-xl shrink-0 transition-colors ${
-                                                        isSelected
-                                                            ? "bg-indigo-600 text-white shadow-xs"
-                                                            : "bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                                                    }`}
-                                                >
-                                                    <Building2 className="w-5 h-5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span
-                                                            className={`text-xs font-extrabold px-2 py-0.5 rounded-md ${
-                                                                isSelected
-                                                                    ? "bg-indigo-600 text-white"
-                                                                    : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                                                            }`}
-                                                        >
-                                                            코드: {company.companyId}
-                                                        </span>
-                                                        {isSelected && (
-                                                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                                                                선택됨
-                                                            </span>
-                                                        )}
+                            {/* 등록된 회사가 많아지면 스크롤로 목록 조회 및 선택 */}
+                            <div className="max-h-72 sm:max-h-80 overflow-y-auto pr-1.5 custom-scrollbar">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                    {registeredCompanies.map((company) => {
+                                        const isSelected =
+                                            company.companyId === activeCompanyId;
+                                        return (
+                                            <button
+                                                key={company.companyId}
+                                                type="button"
+                                                onClick={() =>
+                                                    handleSelectCompany(
+                                                        company.companyId,
+                                                    )
+                                                }
+                                                className={`text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                                                    isSelected
+                                                        ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 dark:border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm"
+                                                        : "border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700"
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3.5 min-w-0">
+                                                    <div
+                                                        className={`p-3 rounded-xl shrink-0 transition-colors ${
+                                                            isSelected
+                                                                ? "bg-indigo-600 text-white shadow-xs"
+                                                                : "bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                                        }`}
+                                                    >
+                                                        <Building2 className="w-5 h-5" />
                                                     </div>
-                                                    <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-1.5 truncate">
-                                                        {company.companyName}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                        등록된 사원:{" "}
-                                                        <strong className="text-slate-700 dark:text-slate-200">
-                                                            {company.userCount}명
-                                                        </strong>
-                                                    </p>
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span
+                                                                className={`text-xs font-extrabold px-2 py-0.5 rounded-md ${
+                                                                    isSelected
+                                                                        ? "bg-indigo-600 text-white"
+                                                                        : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                                                                }`}
+                                                            >
+                                                                코드: {company.companyId}
+                                                            </span>
+                                                            {isSelected && (
+                                                                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                                    선택됨
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-1.5 truncate">
+                                                            {company.companyName}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                            등록된 사원:{" "}
+                                                            <strong className="text-slate-700 dark:text-slate-200">
+                                                                {company.userCount}명
+                                                            </strong>
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </section>
