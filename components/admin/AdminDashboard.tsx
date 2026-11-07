@@ -144,9 +144,11 @@ export default function AdminDashboard({
         });
 
         for (const u of allFetchedUsers) {
+            // 최고관리자(ROLE_MASTER) 계정은 회사별 등록 사원 수에서 제외
+            const countDelta = String(u.role).includes("MASTER") ? 0 : 1;
             const existing = companyMap.get(u.companyId);
             if (existing) {
-                existing.userCount += 1;
+                existing.userCount += countDelta;
                 if (u.companyName && existing.companyName.startsWith("회사 #")) {
                     existing.companyName = u.companyName;
                 }
@@ -154,7 +156,7 @@ export default function AdminDashboard({
                 companyMap.set(u.companyId, {
                     companyId: u.companyId,
                     companyName: u.companyName ?? `회사 #${u.companyId}`,
-                    userCount: 1,
+                    userCount: countDelta,
                 });
             }
         }
@@ -178,15 +180,15 @@ export default function AdminDashboard({
     }, [registeredCompanies, activeCompanyId, userInfo.companyId, userInfo.companyName]);
 
     // 현재 선택된 회사일련번호(activeCompanyId)에 속한 유저 목록
-    // (중간관리자 로그인 시에는 최고관리자(ROLE_MASTER) 계정이 목록에 노출되지 않도록 필터링)
+    // (로그인 권한과 관계없이 최고관리자(ROLE_MASTER) 계정은 사용자 목록에 노출하지 않음)
     const companyUsers = useMemo(
         () =>
             allFetchedUsers.filter(
                 (u) =>
                     u.companyId === activeCompanyId &&
-                    (isMaster || !String(u.role).includes("MASTER")),
+                    !String(u.role).includes("MASTER"),
             ),
-        [allFetchedUsers, activeCompanyId, isMaster],
+        [allFetchedUsers, activeCompanyId],
     );
 
     // 펼쳐진 유저 사번 Set 및 사원별 개별 파일 목록 맵
