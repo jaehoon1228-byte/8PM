@@ -7,7 +7,11 @@ import ky from "ky";
 import { setRefreshToken } from "@/utils/createHttpOnlyCookie";
 import { recordLoginTimestamp } from "@/utils/preferences";
 import BadRequest from "./BadRequest";
-import { baseUrl } from "@/utils/api";
+import {
+    baseUrl,
+    clearCachedAccessToken,
+    setCachedAccessToken,
+} from "@/utils/api";
 import Link from "next/link";
 import Form from "next/form";
 
@@ -18,10 +22,10 @@ export default function LoginForm() {
     const [companycode, setCompanycode] = useState<string>("");
     const [loginFailed, setLoginFailed] = useState(false);
 
-    const handleSubmit = async () => {
+        const handleSubmit = async () => {
         type LoginResponse = {
-            message: string;
-            refreshToken: string;
+            message?: string;
+            refreshToken?: string;
         };
 
         if (!companycode.trim()) {
@@ -38,21 +42,31 @@ export default function LoginForm() {
         }
 
         const loginCredentials = {
-            companyId: companycode,
-            employeeId,
+            companyId: Number(companycode.trim()),
+            employeeId: Number(employeeId.trim()),
             password,
         };
 
         const loginRequest = await ky.post(`/api/v1/login`, {
             baseUrl,
-            body: JSON.stringify(loginCredentials),
+            json: loginCredentials,
+            credentials: "include",
             throwHttpErrors: false,
         });
 
         if (loginRequest.ok) {
             setLoginFailed(false);
-            const loginResponse = await loginRequest.json<LoginResponse>();
-            await setRefreshToken(loginResponse.refreshToken);
+            clearCachedAccessToken();
+            const authHeader = loginRequest.headers.get("Authorization");
+            if (authHeader) {
+                setCachedAccessToken(authHeader);
+            }
+            const loginResponse = await loginRequest
+                .json<LoginResponse>()
+                .catch(() => ({} as LoginResponse));
+            if (loginResponse.refreshToken) {
+                await setRefreshToken(loginResponse.refreshToken);
+            }
             recordLoginTimestamp();
             router.push("/");
         } else if (loginRequest.status === 401) {

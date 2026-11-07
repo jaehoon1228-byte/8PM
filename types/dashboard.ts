@@ -36,6 +36,10 @@ export interface UploadedFile {
     id: string; // 백엔드 fileId (UUID 문자열)
     name: string;
     size: string;
+    uploadedAt?: string;
+    employeeId?: number;
+    companyId?: number;
+    shared?: boolean;
 }
 
 /** 서버(SSR)에서 미리 받아온 초기 데이터. null 이면 SSR 실패 → 클라이언트(CSR)에서 다시 요청 */
@@ -43,6 +47,14 @@ export interface DashboardInitialData {
     userInfo: UserInfo | null;
     chatSessions: ChatSession[] | null;
     files: UploadedFile[] | null;
+}
+
+/** 관리자 화면(/admin) 서버(SSR)에서 병렬로 미리 받아온 초기 데이터 */
+export interface AdminInitialData {
+    userInfo: UserInfo | null;
+    companyUsers: UserInfo[] | null;
+    sharedFiles: UploadedFile[] | null;
+    userFilesMap: Record<number, UploadedFile[]> | null;
 }
 
 // --------------------- 백엔드 DTO / Entity 타입 ------------------------
@@ -85,12 +97,25 @@ export interface ChatHistoryDto {
     role: "user" | "assistant" | string;
 }
 
-/** FileMetadata Entity (FileUploadResponseDto.fileData) */
+/** FileMetadata Entity & FileResponseDto (GET/POST /api/v1/files) */
 export interface FileMetadataDto {
     fileId: string;
+    companyId?: number;
+    employeeId?: number | { employeeId: number; companyId?: { companyId: number } };
     originName: string;
     fileType: string;
-    uploadedAt: Date;
+    shared?: boolean;
+    uploadedAt: Date | string;
+}
+
+/** UserController POST /api/v1/users 요청 (JoinRequestDTO) */
+export interface JoinRequestDto {
+    companyId: number;
+    employeeId: number;
+    password: string;
+    username: string;
+    email: string;
+    role: UserRole;
 }
 
 /** FileController POST /api/v1/files/upload 응답 (FileUploadResponseDto) */

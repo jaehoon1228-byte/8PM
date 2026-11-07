@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // 방금 만든 utils 폴더의 api 모듈을 불러옵니다.
 import { api } from "../utils/api";
+import { logout } from "../utils/dashboardApi";
 import { isHTTPError } from "ky";
+import { isManagerOrAbove } from "../utils/preferences";
 
 interface UserInfo {
     companyId: number;
@@ -40,20 +42,14 @@ export default function UserProfile() {
 
     const handleLogout = async () => {
         try {
-            // 1. 백엔드로 로그아웃 요청 전송 (Redis 토큰 삭제 및 HttpOnly 쿠키 무효화 트리거)
-            // 주의: 백엔드 시큐리티 설정에 따라 경로가 다를 수 있습니다. (예: /logout 또는 /api/v1/logout)
-            await api.post("/api/v1/logout");
+            await logout();
         } catch (error) {
             console.error("백엔드 로그아웃 처리 실패:", error);
         } finally {
-            // 2. 백엔드 처리 성공 여부와 상관없이 프론트엔드 스토리지 비우기 및 이동
-            localStorage.removeItem("accessToken");
             alert("로그아웃 되었습니다.");
             router.push("/login");
         }
     };
-
-    console.log(JSON.stringify(userInfo));
 
     return (
         <div className="relative inline-block text-left">
@@ -86,6 +82,18 @@ export default function UserProfile() {
                         >
                             👤 내 정보 조회
                         </button>
+                        {isManagerOrAbove(userInfo?.role) && (
+                            <button
+                                onClick={() => {
+                                    setIsDropdownOpen(false);
+                                    router.push("/admin");
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-between"
+                            >
+                                <span>🛡️ 관리자 페이지</span>
+                                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">관리자</span>
+                            </button>
+                        )}
                         <button
                             onClick={handleLogout}
                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"

@@ -39,9 +39,9 @@ export default function PasswordResetForm() {
         );
 
         const requestBody = {
-            companyId: companycode,
-            employeeId,
-            email: companyEmail,
+            companyId: Number(companycode.trim()),
+            employeeId: Number(employeeId.trim()),
+            email: companyEmail.trim(),
         };
 
         try {

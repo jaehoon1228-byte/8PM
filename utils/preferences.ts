@@ -105,6 +105,13 @@ export function formatRoleLabel(role: string | undefined): string {
     return role;
 }
 
+/** 중간관리자(ROLE_MANAGER) 이상 권한 여부 확인 (중간관리자, 최고관리자) */
+export function isManagerOrAbove(role?: string): boolean {
+    if (!role) return false;
+    const upper = role.toUpperCase();
+    return upper.includes("MASTER") || upper.includes("MANAGER") || upper.includes("MANEGER");
+}
+
 /** 계정 생성일자 포맷 (YYYY년 MM월 DD일) */
 export function formatCreatedDate(dateStr?: string): string {
     if (!dateStr) return "2026년 06월 09일";

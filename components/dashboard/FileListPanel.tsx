@@ -19,8 +19,8 @@ export default function FileListPanel({
     onRemoveFile,
 }: FileListPanelProps) {
     return (
-        <aside className="flex-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl p-5 shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 flex flex-col overflow-hidden transition-colors">
-            <div className="flex items-center justify-between mb-4 px-1">
+        <aside className="flex-1 min-h-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl p-5 shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 flex flex-col overflow-hidden transition-colors">
+            <div className="flex items-center justify-between mb-4 px-1 shrink-0">
                 <h2 className="text-slate-900 dark:text-white font-bold text-sm tracking-tight">
                     내가 올린 파일
                 </h2>
@@ -29,7 +29,7 @@ export default function FileListPanel({
                 </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1.5 custom-scrollbar">
                 {uploadedFiles.length === 0 ? (
                     <div className="py-12 px-3 text-center">
                         <FolderOpen className="w-7 h-7 text-slate-300 dark:text-slate-700 mx-auto mb-2" />

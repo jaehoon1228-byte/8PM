@@ -22,6 +22,11 @@ export const ENDPOINTS = {
     logout: "/api/v1/logout",
     // UserController (@RequestMapping("/api/v1/users"))
     me: "/api/v1/users/me",
+    users: "/api/v1/users", // GET: 관리자용 사용자 목록 조회, POST: 계정 생성
+    deleteUser: (targetEmployeeId: number) =>
+        `/api/v1/users/${encodeURIComponent(String(targetEmployeeId))}`, // DELETE: 사용자 삭제
+    updateUserRole: (targetEmployeeId: number) =>
+        `/api/v1/users/${encodeURIComponent(String(targetEmployeeId))}`, // PATCH: 권한 수정
     // ChatController (@RequestMapping("/api/v1/chat")) & spec.yaml
     chatSessions: "/api/v1/chat/sessions", // GET: 이전 대화방 목록 조회 (spec.yaml 정의)
     createSession: "/api/v1/chat/sessionrooms", // POST: 새 대화방 생성
@@ -77,13 +82,30 @@ export const toMessageFromAsk = (dto: AskResponseDto): Message => ({
 export const toUploadedFile = (
     dto: FileMetadataDto,
     clientByteSize?: number,
-): UploadedFile => ({
-    id: dto.fileId,
-    name: dto.originName,
-    size:
-        clientByteSize !== undefined
-            ? formatFileSize(clientByteSize)
-            : dto.fileType
-              ? dto.fileType.toUpperCase()
-              : "",
-});
+): UploadedFile => {
+    const resolvedEmployeeId =
+        typeof dto.employeeId === "number"
+            ? dto.employeeId
+            : dto.employeeId?.employeeId;
+    const resolvedCompanyId =
+        typeof dto.companyId === "number"
+            ? dto.companyId
+            : typeof dto.employeeId === "object"
+              ? dto.employeeId?.companyId?.companyId
+              : undefined;
+
+    return {
+        id: dto.fileId,
+        name: dto.originName,
+        size:
+            clientByteSize !== undefined
+                ? formatFileSize(clientByteSize)
+                : dto.fileType
+                  ? dto.fileType.toUpperCase()
+                  : "",
+        uploadedAt: dto.uploadedAt ? String(dto.uploadedAt) : undefined,
+        employeeId: resolvedEmployeeId,
+        companyId: resolvedCompanyId,
+        shared: dto.shared,
+    };
+};

@@ -27,6 +27,7 @@ import {
     formatRoleLabel,
     getLastLoginTimestamp,
     getPreferences,
+    isManagerOrAbove,
     PREFERENCES_EVENT,
     setDarkModePreference,
     setNotificationsPreference,
@@ -208,6 +209,38 @@ export default function SettingsModal({
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
+
+                                    {/* 중간관리자(ROLE_MANAGER) 이상 전용 관리자 페이지 버튼 */}
+                                    {isManagerOrAbove(userInfo?.role) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleClose();
+                                                router.push("/admin");
+                                            }}
+                                            className="w-full flex items-center justify-between p-3 rounded-xl transition text-left cursor-pointer group bg-linear-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/5 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-indigo-500/10 border border-indigo-200/80 dark:border-indigo-800/60"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-linear-to-tr from-indigo-600 to-violet-600 text-white shadow-xs">
+                                                    <ShieldCheck className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">
+                                                            관리자 페이지
+                                                        </p>
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-600 text-white">
+                                                            관리자 전용
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-indigo-600/80 dark:text-indigo-400">
+                                                        시스템 및 사원 관리자 콘솔로 이동합니다.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-indigo-500 group-hover:translate-x-0.5 transition-transform" />
+                                        </button>
+                                    )}
                                     {/* <button
                                         type="button"
                                         onClick={() => setView("security")}

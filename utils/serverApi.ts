@@ -8,9 +8,11 @@
 import ky, { isHTTPError, type KyInstance } from "ky";
 import { cookies } from "next/headers";
 import type {
+    AdminInitialData,
     ChatSessionResponseDto,
     DashboardInitialData,
     FileMetadataDto,
+    UploadedFile,
     UserInfo,
 } from "@/types/dashboard";
 import {
@@ -132,10 +134,20 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
             async () =>
                 (
                     await client.get(ENDPOINTS.files).json<FileMetadataDto[]>()
-                ).map(toUploadedFile),
+                )
+                    .filter((f) => !f.shared)
+                    .map((f) => toUploadedFile(f)),
             true,
         ),
     ]);
+
+    const personalFiles = (files ?? []).filter(
+        (f) =>
+            !f.shared &&
+            (!userInfo?.employeeId ||
+                f.employeeId === undefined ||
+                f.employeeId === userInfo.employeeId),
+    );
 
     return {
         status: "ok",
@@ -143,7 +155,103 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
             userInfo,
             // 대화방 목록 조회 API 가 아직 미구현(null)이더라도 빈 배열을 내려 불필요한 CSR 재요청 방지
             chatSessions: chatSessions ?? [],
-            files: files ?? [],
+            files: personalFiles,
+        },
+    };
+}
+
+export type AdminSSRResult =
+    | { status: "expired" }
+    | { status: "ok"; data: AdminInitialData };
+
+/**
+ * 관리자 화면(/admin) 초기 데이터를 서버에서 병렬 조회 (SSR)
+ *  - GET /api/v1/users/me (현재 로그인 관리자 정보)
+ *  - GET /api/v1/users (소속 회사 사용자 목록)
+ *  - GET /api/v1/files?allCompany=true (공용 파일 + 사원별 개별 파일 목록)
+ */
+export async function getAdminInitialData(): Promise<AdminSSRResult> {
+    const empty: AdminInitialData = {
+        userInfo: null,
+        companyUsers: null,
+        sharedFiles: null,
+        userFilesMap: null,
+    };
+
+    let auth: ServerAuth;
+    try {
+        auth = await createServerApi();
+    } catch (error) {
+        console.error("[SSR-Admin] 토큰 재발급 요청 실패:", error);
+        return { status: "ok", data: empty };
+    }
+
+    if (auth.status === "expired") return { status: "expired" };
+    if (auth.status === "no-cookie") return { status: "ok", data: empty };
+
+    const { client } = auth;
+    const [userInfo, allUsers, allFiles] = await Promise.all([
+        safe("관리자 정보", () => client.get(ENDPOINTS.me).json<UserInfo>()),
+        safe(
+            "사원 목록",
+            () => client.get(ENDPOINTS.users).json<UserInfo[]>(),
+            true,
+        ),
+        safe(
+            "사내 전체 파일 목록",
+            async () =>
+                (
+                    await client
+                        .get(ENDPOINTS.files, {
+                            searchParams: { allCompany: "true" },
+                        })
+                        .json<FileMetadataDto[]>()
+                ).map((f) => toUploadedFile(f)),
+            true,
+        ),
+    ]);
+
+    const isMaster = String(userInfo?.role ?? "").includes("MASTER");
+    const companyUsers =
+        userInfo && allUsers
+            ? isMaster
+                ? allUsers
+                : allUsers.filter(
+                      (u) =>
+                          u.companyId === userInfo.companyId &&
+                          !String(u.role).includes("MASTER"),
+                  )
+            : null;
+
+    const sharedFiles = allFiles
+        ? allFiles
+              .filter((f) => f.shared === true)
+              .map((f) => ({ ...f, shared: true }))
+        : null;
+
+    let userFilesMap: Record<number, UploadedFile[]> | null = null;
+    if (companyUsers && allFiles) {
+        userFilesMap = {};
+        for (const member of companyUsers) {
+            userFilesMap[member.employeeId] = [];
+        }
+        for (const file of allFiles) {
+            if (!file.shared && file.employeeId !== undefined) {
+                if (!userFilesMap[file.employeeId]) {
+                    userFilesMap[file.employeeId] = [];
+                }
+                userFilesMap[file.employeeId].push(file);
+            }
+        }
+    }
+
+    return {
+        status: "ok",
+        data: {
+            userInfo,
+            companyUsers,
+            sharedFiles,
+            userFilesMap,
         },
     };
 }

@@ -1,18 +1,40 @@
 import { NextResponse } from "next/server";
+import { getMockDb } from "@/utils/mockStore";
 
 // [Mock API] POST /api/v1/login
 // - 로컬 개발 및 백엔드 미구동 환경 테스트용
-// - AWS 배포 시: NEXT_PUBLIC_BACKEND_HOST가 실제 백엔드 도메인(예: https://api.mes...)으로 지정되면
-//   브라우저 요청이 실제 백엔드로 직행하므로 이 라우트는 전혀 호출되지 않습니다.
 export async function POST(request: Request) {
     try {
-        const body = await request.json().catch(() => ({}));
-        console.log("[Mock API] 로그인 요청 수신:", body);
+        const body = (await request.json().catch(() => ({}))) as {
+            companyId?: string | number;
+            employeeId?: string | number;
+            password?: string;
+        };
 
-        // 임의의 Mock JWT 토큰 생성
-        const mockAccessToken =
-            "mock-access-token-" + Buffer.from(JSON.stringify(body)).toString("base64");
-        const mockRefreshToken = "mock-refresh-token-" + Date.now();
+        const db = getMockDb();
+        const reqCompanyId = Number(body.companyId);
+        const reqEmployeeId = Number(body.employeeId);
+
+        let targetUser = db.users.find(
+            (u) =>
+                u.companyId === reqCompanyId &&
+                u.employeeId === reqEmployeeId,
+        );
+
+        if (!targetUser) {
+            targetUser = db.users.find(
+                (u) => u.employeeId === reqEmployeeId,
+            );
+        }
+
+        if (!targetUser) {
+            targetUser =
+                db.users.find((u) => u.role === "ROLE_MANAGER") ?? db.users[0];
+        }
+
+        const identity = `${targetUser.companyId}_${targetUser.employeeId}`;
+        const mockAccessToken = `mock-access-${identity}-${Date.now()}`;
+        const mockRefreshToken = `mock-refresh-${identity}-${Date.now()}`;
 
         return NextResponse.json(
             {
@@ -27,6 +49,9 @@ export async function POST(request: Request) {
             },
         );
     } catch {
-        return NextResponse.json({ message: "Mock login failed" }, { status: 500 });
+        return NextResponse.json(
+            { message: "Mock login failed" },
+            { status: 500 },
+        );
     }
 }

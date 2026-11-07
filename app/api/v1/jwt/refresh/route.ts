@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { resolveMockUserFromRequest } from "@/utils/mockStore";
 
 // [Mock API] POST /api/v1/jwt/refresh
-export async function POST() {
-    console.log("[Mock API] 토큰 갱신 요청 수신");
-    const newAccessToken = "mock-refreshed-token-" + Date.now();
+export async function POST(request: Request) {
+    const user = resolveMockUserFromRequest(request);
+    const identity = `${user.companyId}_${user.employeeId}`;
+    const newAccessToken = `mock-access-${identity}-${Date.now()}`;
 
     return new NextResponse("토큰 재발급 성공 (Mock)", {
         status: 200,

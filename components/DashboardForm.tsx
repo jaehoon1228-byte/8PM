@@ -13,7 +13,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BellRing, X } from "lucide-react";
+import { AlertTriangle, BellRing, X } from "lucide-react";
 import { isHTTPError } from "ky";
 import ChatSidebar from "@/components/dashboard/ChatSidebar";
 import ChatPanel from "@/components/dashboard/ChatPanel";
@@ -29,6 +29,8 @@ import {
     fetchChatHistories,
     fetchChatSessions,
     fetchMyInfo,
+    fetchPersonalFiles,
+    getStoredSharedFiles,
     isSessionExpired,
     uploadFiles,
 } from "@/utils/dashboardApi";
@@ -92,6 +94,9 @@ export default function DashboardForm({
     const [resetKey, setResetKey] = useState(0);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [replyBanner, setReplyBanner] = useState<ReplyBanner | null>(null);
+    const [duplicateFileModal, setDuplicateFileModal] = useState<
+        string[] | null
+    >(null);
 
     const activeChatIdRef = useRef<string | null>(null);
     const isSettingsOpenRef = useRef(false);
@@ -140,13 +145,36 @@ export default function DashboardForm({
             );
             if (savedFiles) {
                 const parsed = JSON.parse(savedFiles) as UploadedFile[];
+                const sharedIds = new Set(
+                    userInfo?.companyId
+                        ? getStoredSharedFiles(userInfo.companyId).map(
+                              (f) => f.id,
+                          )
+                        : [],
+                );
                 setUploadedFiles((prev) => {
                     const existingIds = new Set(prev.map((f) => f.id));
                     return [
-                        ...prev,
-                        ...parsed.filter((f) => !existingIds.has(f.id)),
+                        ...prev.filter(
+                            (f) => !f.shared && !sharedIds.has(f.id),
+                        ),
+                        ...parsed.filter(
+                            (f) =>
+                                !f.shared &&
+                                !sharedIds.has(f.id) &&
+                                !existingIds.has(f.id),
+                        ),
                     ];
                 });
+            }
+            if (userInfo?.companyId) {
+                void fetchPersonalFiles(employeeId, userInfo.companyId)
+                    .then((serverPersonalFiles) => {
+                        setUploadedFiles(serverPersonalFiles);
+                    })
+                    .catch(() => {
+                        // 오프라인 등 실패 시 로컬 상태 유지
+                    });
             }
         } catch (error) {
             console.error("로컬 저장 데이터 복원 실패:", error);
@@ -480,17 +508,70 @@ export default function DashboardForm({
         const selected = Array.from(files);
         e.target.value = "";
 
+        const existingNameSet = new Set<string>(
+            uploadedFiles.map((f) => f.name.trim().toLowerCase()),
+        );
+        const duplicateNames: string[] = [];
+        const filesToUpload: File[] = [];
+
+        for (const file of selected) {
+            const normalizedName = file.name.trim().toLowerCase();
+            if (existingNameSet.has(normalizedName)) {
+                duplicateNames.push(file.name);
+            } else {
+                existingNameSet.add(normalizedName);
+                filesToUpload.push(file);
+            }
+        }
+
+        if (duplicateNames.length > 0) {
+            setDuplicateFileModal(duplicateNames);
+        }
+
+        if (filesToUpload.length === 0) {
+            return;
+        }
+
         setIsUploading(true);
         try {
-            const { uploaded, failed } = await uploadFiles(selected);
+            const { uploaded, failed } = await uploadFiles(filesToUpload);
             if (uploaded.length > 0) {
-                setUploadedFiles((prev) => [...uploaded, ...prev]);
+                setUploadedFiles((prev) => {
+                    const mergedMap = new Map<string, UploadedFile>();
+                    for (const item of uploaded) {
+                        mergedMap.set(item.id, item);
+                    }
+                    for (const item of prev) {
+                        if (!mergedMap.has(item.id)) {
+                            mergedMap.set(item.id, item);
+                        }
+                    }
+                    return Array.from(mergedMap.values());
+                });
             }
             if (failed.length > 0) {
-                const summary = failed
-                    .map((f) => `- ${f.name}: ${f.reason}`)
-                    .join("\n");
-                alert(`일부 파일 업로드에 실패했습니다.\n${summary}`);
+                const serverDuplicateNames = failed
+                    .filter((f) => f.reason.includes("이미 업로드한 파일"))
+                    .map((f) => f.name);
+                if (serverDuplicateNames.length > 0) {
+                    setDuplicateFileModal((prev) =>
+                        Array.from(
+                            new Set([
+                                ...(prev ?? []),
+                                ...serverDuplicateNames,
+                            ]),
+                        ),
+                    );
+                }
+                const nonDuplicateFailed = failed.filter(
+                    (f) => !f.reason.includes("이미 업로드한 파일"),
+                );
+                if (nonDuplicateFailed.length > 0) {
+                    const summary = nonDuplicateFailed
+                        .map((f) => `- ${f.name}: ${f.reason}`)
+                        .join("\n");
+                    alert(`일부 파일 업로드에 실패했습니다.\n${summary}`);
+                }
             }
         } catch (error) {
             await handleApiError(error, "파일 업로드에 실패했습니다.", true);
@@ -591,7 +672,7 @@ export default function DashboardForm({
                 onOpenFilePicker={handleOpenFilePicker}
             />
 
-            <div className="w-72 flex flex-col gap-5 shrink-0">
+            <div className="w-72 min-h-0 flex flex-col gap-5 shrink-0">
                 <ProfileCard
                     userInfo={userInfo}
                     onOpenSettings={() => setIsSettingsOpen(true)}
@@ -611,6 +692,54 @@ export default function DashboardForm({
                 userInfo={userInfo}
                 onClearLocalCache={handleClearLocalCache}
             />
+
+            {/* 개별 파일 중복 업로드 차단 경고 모달 */}
+            {duplicateFileModal && duplicateFileModal.length > 0 && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4"
+                    onClick={() => setDuplicateFileModal(null)}
+                >
+                    <div
+                        className="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xl p-6 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4">
+                            <AlertTriangle className="w-6 h-6" />
+                        </div>
+
+                        <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                            이미 업로드한 파일이 존재합니다.
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                            동일한 이름의 파일이 이미 업로드되어 있어 중복 파일은
+                            업로드되지 않았습니다.
+                        </p>
+
+                        <div className="mt-3 max-h-28 overflow-y-auto rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-left space-y-1">
+                            {duplicateFileModal.map((name) => (
+                                <p
+                                    key={name}
+                                    className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate"
+                                    title={name}
+                                >
+                                    • {name}
+                                </p>
+                            ))}
+                        </div>
+
+                        <div className="mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setDuplicateFileModal(null)}
+                                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition cursor-pointer"
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
