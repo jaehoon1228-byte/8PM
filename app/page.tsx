@@ -9,7 +9,7 @@ import { getDashboardInitialData } from "@/utils/serverApi";
 export default async function DashboardPage() {
     const result = await getDashboardInitialData();
 
-    if (result.status === "expired") {
+    if (result.status === "expired" || !result.data.userInfo) {
         redirect("/login");
     }
 
