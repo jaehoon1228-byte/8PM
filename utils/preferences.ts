@@ -6,32 +6,33 @@ import { ThemeMode, usePreferenceStore } from "@/utils/store/preferenceStore";
 export const PREFERENCES_EVENT = "mes-preferences-change";
 
 export interface AppPreferences {
-    darkMode: boolean;
+    darkMode: ThemeMode;
     notifications: boolean;
 }
 
 export function getPreferences(): AppPreferences {
     if (typeof window === "undefined") {
-        return { darkMode: false, notifications: true };
+        return { darkMode: ThemeMode.Light, notifications: true };
     }
     const { theme, notifications } = usePreferenceStore.getState();
     return {
-        darkMode: theme === ThemeMode.Dark,
+        darkMode: theme,
         notifications,
     };
 }
 
-export function applyThemeClass(darkMode: boolean): void {
+export function applyThemeClass(darkMode: ThemeMode): void {
     if (typeof document === "undefined") return;
-    document.documentElement.classList.toggle("dark", darkMode);
+    document.documentElement.classList.toggle(
+        "dark",
+        darkMode === ThemeMode.Dark,
+    );
 }
 
-export function setDarkModePreference(enabled: boolean): void {
+export function setDarkModePreference(mode: ThemeMode): void {
     if (typeof window === "undefined") return;
-    usePreferenceStore
-        .getState()
-        .setTheme(enabled ? ThemeMode.Dark : ThemeMode.Light);
-    applyThemeClass(enabled);
+    usePreferenceStore.getState().setTheme(mode);
+    applyThemeClass(mode);
     window.dispatchEvent(new Event(PREFERENCES_EVENT));
 }
 

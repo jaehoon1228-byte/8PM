@@ -6,6 +6,7 @@
 import { isHTTPError } from "ky";
 import { api, clearCachedAccessToken } from "@/utils/api";
 import { clearRefreshToken, getRefreshToken } from "@/utils/createHttpOnlyCookie";
+import { resetStores } from "@/utils/store/resetStores";
 import type {
     AskResponseDto,
     ChatHistoryDto,
@@ -493,5 +494,6 @@ export async function logout(): Promise<void> {
     } finally {
         clearCachedAccessToken();
         await clearRefreshToken();
+        resetStores();
     }
 }
