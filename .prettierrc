@@ -1,5 +1,30 @@
 {
     "endOfLine": "crlf",
     "tabWidth": 4,
-    "useTabs": false
+    "useTabs": false,
+    "overrides": [
+        {
+            "files": [
+                "*.yaml",
+                "*.yml"
+            ],
+            "options": {
+                "tabWidth": 2,
+                "endOfLine": "lf"
+            }
+        },
+        {
+            "files": [
+                "Dockerfile",
+                ".dockerignore",
+                "docker-compose.yaml",
+                "docker-compose.yml",
+                "compose.yml",
+                "compose.yaml"
+            ],
+            "options": {
+                "endOfLine": "lf"
+            }
+        }
+    ]
 }
