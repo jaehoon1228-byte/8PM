@@ -22,7 +22,7 @@ jobs:
       - name: 의존성 설치
         run: npm ci
       - name: 타입 검사 실행
-        uses: npm exec -- tsc --noEmit
+        run: "npm exec -- tsc --noEmit"
   eslint:
     name: ESLint 실행
     runs-on: ubuntu-latest
