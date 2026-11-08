@@ -229,12 +229,13 @@ export default function SettingsModal({
                                                         <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">
                                                             관리자 페이지
                                                         </p>
-                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-600 text-white">
+                                                        {/* <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-600 text-white">
                                                             관리자 전용
-                                                        </span>
+                                                        </span> */}
                                                     </div>
                                                     <p className="text-xs text-indigo-600/80 dark:text-indigo-400">
-                                                        시스템 및 사원 관리자 콘솔로 이동합니다.
+                                                        시스템 및 사원 관리자
+                                                        콘솔로 이동합니다.
                                                     </p>
                                                 </div>
                                             </div>
