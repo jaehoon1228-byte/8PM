@@ -77,7 +77,9 @@ async function safe<T>(
             // 아직 백엔드 컨트롤러에 미구현된 엔드포인트(404/405)는 조용히 빈 값으로 처리
             if (
                 optional &&
-                (error.response.status === 404 || error.response.status === 405)
+                (error.response.status === 404 ||
+                    error.response.status === 403 ||
+                    error.response.status === 405)
             ) {
                 return null;
             }
@@ -90,8 +92,7 @@ async function safe<T>(
 }
 
 export type DashboardSSRResult =
-    | { status: "expired" }
-    | { status: "ok"; data: DashboardInitialData };
+    { status: "expired" } | { status: "ok"; data: DashboardInitialData };
 
 /**
  * 메인 화면 초기 데이터를 서버에서 병렬 조회
@@ -132,9 +133,7 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
         safe(
             "파일 목록",
             async () =>
-                (
-                    await client.get(ENDPOINTS.files).json<FileMetadataDto[]>()
-                )
+                (await client.get(ENDPOINTS.files).json<FileMetadataDto[]>())
                     .filter((f) => !f.shared)
                     .map((f) => toUploadedFile(f)),
             true,
@@ -161,8 +160,7 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
 }
 
 export type AdminSSRResult =
-    | { status: "expired" }
-    | { status: "ok"; data: AdminInitialData };
+    { status: "expired" } | { status: "ok"; data: AdminInitialData };
 
 /**
  * 관리자 화면(/admin) 초기 데이터를 서버에서 병렬 조회 (SSR)

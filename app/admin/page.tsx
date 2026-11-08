@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import { getAdminInitialData } from "@/utils/serverApi";
 import { isManagerOrAbove } from "@/utils/preferences";
@@ -20,7 +20,8 @@ export default async function AdminPage() {
 
     // 2. 중간관리자(ROLE_MANAGER) 이상이 아니면 메인 대시보드로 리다이렉트
     if (!isManagerOrAbove(userInfo.role)) {
-        redirect("/");
+        // redirect("/");
+        notFound();
     }
 
     return <AdminDashboard userInfo={userInfo} initialData={result.data} />;
