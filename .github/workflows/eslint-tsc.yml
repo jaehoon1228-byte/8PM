@@ -1,0 +1,42 @@
+name: 타입 검사 및 ESLint
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+jobs:
+  tsc:
+    name: TypeScript 타입 검사
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v7
+      - name: Node.js 설치
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - name: 의존성 설치
+        run: npm ci
+      - name: 타입 검사 실행
+        run: "npm exec -- tsc --noEmit"
+  eslint:
+    name: ESLint 실행
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v7
+      - name: Node.js 설치
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - name: 의존성 설치
+        run: npm ci
+      - name: ESLint 실행
+        uses: sibiraj-s/action-eslint@v4
+        with:
+          package-manager: npm
