@@ -54,10 +54,7 @@ import {
     reviveUploadedFileMap,
     toUserInfo,
 } from "@/utils/endpoints";
-import {
-    formatCreatedDate,
-    formatRoleLabel,
-} from "@/utils/preferences";
+import { formatCreatedDate, formatRoleLabel } from "@/utils/preferences";
 import { isManagerOrAbove } from "@/utils/role";
 
 interface AdminDashboardProps {
@@ -83,7 +80,7 @@ type ConfirmModalState =
     | null;
 
 const PASSWORD_REGEX =
-    /^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[@$!%*#?&])[A-Za-z0-9@$!%*#?&]{8,20}$/;
+    /^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[@$!%*#?&])[A-Za-z0-9@$!%*#?&]{8,256}$/;
 const ALLOWED_EXTENSIONS = new Set(["pdf", "docx", "xlsx", "pptx", "csv"]);
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -192,7 +189,7 @@ export default function AdminDashboard({
         userInfo.companyName,
     ]);
 
-    // 현재 선택된 회사일련번호(activeCompanyId)에 속한 유저 목록
+    // 현재 선택된 회사일련번호(activeCompanyId)에 속한 사용자 목록
     // (로그인 권한과 관계없이 최고관리자(ROLE_MASTER) 계정은 사용자 목록에 노출하지 않음)
     const companyUsers = useMemo(
         () =>
@@ -204,13 +201,17 @@ export default function AdminDashboard({
         [allFetchedUsers, activeCompanyId],
     );
 
-    // 펼쳐진 유저 사번 Set 및 사원별 개별 파일 목록 맵
+    // 펼쳐진 사용자 사번 Set 및 사원별 개별 파일 목록 맵
     const [expandedEmployeeIds, setExpandedEmployeeIds] = useState<Set<number>>(
         new Set(),
     );
     const [userFilesMap, setUserFilesMap] = useState<
         Record<number, UploadedFile[]>
-    >(initialData?.userFilesMap ? reviveUploadedFileMap(initialData.userFilesMap) : {});
+    >(
+        initialData?.userFilesMap
+            ? reviveUploadedFileMap(initialData.userFilesMap)
+            : {},
+    );
     const [loadingUserFilesIds, setLoadingUserFilesIds] = useState<Set<number>>(
         new Set(),
     );
@@ -279,7 +280,7 @@ export default function AdminDashboard({
         }
     }, [activeCompanyId, router, showFeedback]);
 
-    // 유저 목록 조회 (GET /api/v1/users) + 현재 선택된 회사의 사원별 파일 맵 동기화
+    // 사용자 목록 조회 (GET /api/v1/users) + 현재 선택된 회사의 사원별 파일 맵 동기화
     const loadCompanyUsers = useCallback(async () => {
         setIsLoadingUsers(true);
         try {
@@ -388,7 +389,7 @@ export default function AdminDashboard({
         };
     }, [activeCompanyId, userInfo.role, router, showFeedback]);
 
-    // 유저 토글 클릭 시: 해당 유저의 AI 대화용 개별 업로드 파일 목록 펼치기/접기
+    // 사용자 토글 클릭 시: 해당 사용자의 AI 대화용 개별 업로드 파일 목록 펼치기/접기
     const handleToggleUserFiles = async (employeeId: number) => {
         const nextExpanded = new Set(expandedEmployeeIds);
         if (nextExpanded.has(employeeId)) {
@@ -506,7 +507,7 @@ export default function AdminDashboard({
                 });
                 showFeedback(
                     "success",
-                    `회사일련번호 ${activeCompanyId} 공용 데이터 파일 ${uploaded.length}건이 업로드 및 파싱 완료되었습니다. 해당 회사 모든 유저의 AI 대화에 자동 반영됩니다.`,
+                    `회사일련번호 ${activeCompanyId} 공용 데이터 파일 ${uploaded.length}건이 업로드 및 파싱 완료되었습니다. 해당 회사 모든 사용자의 AI 대화에 자동 반영됩니다.`,
                 );
             }
             if (failed.length > 0) {
@@ -801,7 +802,7 @@ export default function AdminDashboard({
         }
         if (!PASSWORD_REGEX.test(newAccountForm.password)) {
             setCreateFormError(
-                "비밀번호는 8~20자리이며, 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.",
+                "비밀번호는 8자리 이상이어야 하며, 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.",
             );
             return;
         }
@@ -875,7 +876,15 @@ export default function AdminDashboard({
     const roleName = formatRoleLabel(userInfo.role);
 
     return (
-        <div className="min-h-screen bg-slate-100/80 dark:bg-[#090D16] text-slate-900 dark:text-slate-100 transition-colors pb-16">
+        <div
+            onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                    setIsCreateUserOpen(false);
+                    setConfirmModal(null);
+                }
+            }}
+            className="min-h-screen bg-slate-100/80 dark:bg-[#090D16] text-slate-900 dark:text-slate-100 transition-colors pb-16"
+        >
             {/* 숨김 파일 인풋: 1) 공용 데이터 파일 업로드용 2) 사원별 개별 파일 업로드용 */}
             <input
                 ref={sharedFileInputRef}
@@ -905,7 +914,7 @@ export default function AdminDashboard({
                             title="메인 대시보드로 돌아가기"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            <span>메인페이지로 이동</span>
+                            <span>돌아가기</span>
                         </button>
                         <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
                         <div className="flex items-center gap-2.5">
@@ -918,7 +927,7 @@ export default function AdminDashboard({
                                 </h1>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
                                     {userInfo.companyName ?? "소속 회사"}{" "}
-                                    (회사일련번호: {userInfo.companyId})
+                                    {/* (회사일련번호: {userInfo.companyId}) */}
                                 </p>
                             </div>
                         </div>
@@ -982,24 +991,21 @@ export default function AdminDashboard({
                   </div> */}
                                     <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-2 flex items-center gap-2">
                                         <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                        <span>
-                                            등록된 회사일련번호 코드 목록
-                                        </span>
+                                        <span>등록된 회사 목록</span>
                                         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
                                             총 {registeredCompanies.length}개
-                                            회사
                                         </span>
                                     </h2>
                                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                        조회할 회사일련번호 코드를 클릭하면 해당
-                                        회사의 공용 데이터 파일 목록과 소속
-                                        사용자 목록으로 즉시 전환됩니다.
+                                        조회할 회사를 클릭하면 해당 회사의 공용
+                                        데이터 파일 목록과 소속 사용자 목록으로
+                                        즉시 전환됩니다.
                                     </p>
                                 </div>
 
                                 <button
                                     type="button"
-                                    onClick={() => void loadCompanyUsers()}
+                                    onClick={() => loadCompanyUsers()}
                                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer self-start md:self-auto shrink-0"
                                     title="등록된 회사 및 전체 사용자 목록 새로고침"
                                 >
@@ -1172,7 +1178,7 @@ export default function AdminDashboard({
                             <div className="py-10 flex flex-col items-center justify-center text-slate-400 gap-2">
                                 <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
                                 <p className="text-xs font-medium">
-                                    공용 데이터 파일 목록을 불러오는 중입니다...
+                                    공용 문서 목록을 불러오는 중입니다...
                                 </p>
                             </div>
                         ) : filteredSharedFiles.length === 0 ? (
@@ -1180,13 +1186,12 @@ export default function AdminDashboard({
                                 <FileText className="w-9 h-9 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                                     {sharedSearchQuery
-                                        ? `'${sharedSearchQuery}' 검색 결과에 해당하는 공용 파일이 없습니다.`
-                                        : "등록된 공용 데이터 파일이 없습니다."}
+                                        ? `'${sharedSearchQuery}'의 검색 결과가 없습니다.`
+                                        : "등록된 공용 문서가 없습니다."}
                                 </p>
                                 <p className="text-xs text-slate-400 mt-1">
                                     우측 상단 &apos;공용 데이터 파일 추가&apos;
-                                    버튼을 눌러 전사 AI 공용 문서를
-                                    업로드하세요.
+                                    버튼을 눌러 공용 문서를 업로드하세요.
                                 </p>
                             </div>
                         ) : (
@@ -1206,9 +1211,9 @@ export default function AdminDashboard({
                                                         <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                                                             {file.name}
                                                         </p>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shrink-0">
+                                                        {/* <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 shrink-0">
                                                             공용
-                                                        </span>
+                                                        </span> */}
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
                                                         <span>
@@ -1267,19 +1272,16 @@ export default function AdminDashboard({
                                 </div> */}
                                 <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1 flex items-center gap-2">
                                     <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                    <span>
-                                        사내 사용자 및 개별 업로드 파일 관리
-                                    </span>
+                                    <span>사용자 및 개인 파일 관리</span>
                                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                         총 {companyUsers.length}명
                                     </span>
                                 </h2>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    선택된 회사 소속 사용자 목록을 관리하며, 각
-                                    사용자의 토글 버튼을 클릭하면 해당 사용자가{" "}
+                                    선택된 회사 소속의 사용자 목록을 관리하며,
                                     <br />
-                                    메인페이지에서 AI와 대화에 사용하는 개별
-                                    파일 목록을 조회·추가·삭제할 수 있습니다.
+                                    사용자가 업로드한 개별 파일 목록을
+                                    조회·추가·삭제할 수 있습니다.
                                 </p>
                             </div>
 
@@ -1368,15 +1370,17 @@ export default function AdminDashboard({
                                 return (
                                     <div
                                         key={`${member.companyId}_${member.employeeId}`}
-                                        onClick={() =>
-                                            handleToggleUserFiles(
-                                                member.employeeId,
-                                            )
-                                        }
                                         className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/30 overflow-hidden transition"
                                     >
-                                        {/* 유저 기본 정보 행 */}
-                                        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 hover:bg-gray-100 transition-colors cursor-pointer">
+                                        {/* 사용자 기본 정보 행 */}
+                                        <div
+                                            onClick={() =>
+                                                handleToggleUserFiles(
+                                                    member.employeeId,
+                                                )
+                                            }
+                                            className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 hover:bg-gray-100 transition-colors cursor-pointer"
+                                        >
                                             <div className="flex items-center gap-3.5 min-w-0">
                                                 {isExpanded ? (
                                                     <ChevronUp className="w-4 h-4" />
@@ -1433,7 +1437,7 @@ export default function AdminDashboard({
                                                 </div>
                                             </div>
 
-                                            {/* 우측 액션 버튼들: 1) AI 대화 파일 목록 토글 버튼 2) 유저 삭제 버튼 */}
+                                            {/* 우측 액션 버튼들: 1) AI 대화 파일 목록 토글 버튼 2) 사용자 삭제 버튼 */}
                                             <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                                                 {/* <button
                                                     type="button"
@@ -1452,14 +1456,15 @@ export default function AdminDashboard({
 
                                                 <button
                                                     type="button"
-                                                    onClick={() =>
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setConfirmModal({
                                                             type: "delete-user",
                                                             targetUser: member,
-                                                        })
-                                                    }
+                                                        });
+                                                    }}
                                                     className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-200/60 dark:border-rose-900/50 transition cursor-pointer"
-                                                    title="해당 유저 삭제"
+                                                    title="해당 사용자 삭제"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                     <span>삭제</span>
@@ -1467,7 +1472,7 @@ export default function AdminDashboard({
                                             </div>
                                         </div>
 
-                                        {/* 토글 오픈 시: 해당 유저가 메인페이지에 업로드한 AI 대화용 개별 파일 목록 */}
+                                        {/* 토글 오픈 시: 해당 사용자가 메인페이지에 업로드한 AI 대화용 개별 파일 목록 */}
                                         {isExpanded && (
                                             <div className="p-4 sm:p-5 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 space-y-3">
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1602,7 +1607,7 @@ export default function AdminDashboard({
                                 </div>
                                 <div>
                                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                                        사내 사용자 계정 추가
+                                        사용자 계정 추가
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                         본인 회사 소속 하위관리자(사용자) 계정을
@@ -1632,11 +1637,12 @@ export default function AdminDashboard({
                             {/* 고정 항목 1: 회사일련번호 */}
                             <div>
                                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 ml-1">
-                                    회사일련번호 (
+                                    회사번호
+                                    {/* (
                                     {isMaster
                                         ? "선택된 회사 적용"
                                         : "본인 회사 고정"}
-                                    )
+                                    ) */}
                                 </label>
                                 <div className="relative flex items-center">
                                     <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
@@ -1736,7 +1742,7 @@ export default function AdminDashboard({
                             {/* 입력 항목 4: 비밀번호 */}
                             <div>
                                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 ml-1">
-                                    비밀번호 (8~20자, 영문·숫자·특수문자 포함)
+                                    비밀번호 (8-256자, 영문·숫자·특수문자 포함)
                                 </label>
                                 <div className="relative flex items-center">
                                     <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
@@ -1827,8 +1833,7 @@ export default function AdminDashboard({
                             {confirmModal.type === "delete-user" && (
                                 <>
                                     <strong className="text-slate-800 dark:text-slate-200">
-                                        {confirmModal.targetUser.username}{" "}
-                                        (사번:{" "}
+                                        {confirmModal.targetUser.username} (
                                         {confirmModal.targetUser.employeeId})
                                     </strong>{" "}
                                     계정을 삭제합니다.
@@ -1840,12 +1845,12 @@ export default function AdminDashboard({
                                     <strong className="text-slate-800 dark:text-slate-200">
                                         {confirmModal.file.name}
                                     </strong>{" "}
-                                    파일만 삭제합니다.
+                                    파일을 삭제합니다.
                                 </>
                             )}
                             {confirmModal.type === "delete-shared-file" && (
                                 <>
-                                    전사 공용 데이터 파일{" "}
+                                    공용 파일{" "}
                                     <strong className="text-slate-800 dark:text-slate-200">
                                         {confirmModal.file.name}
                                     </strong>

@@ -35,9 +35,15 @@ export function setDarkModePreference(enabled: boolean): void {
     window.dispatchEvent(new Event(PREFERENCES_EVENT));
 }
 
-export async function setNotificationsPreference(enabled: boolean): Promise<boolean> {
+export async function setNotificationsPreference(
+    enabled: boolean,
+): Promise<boolean> {
     if (typeof window === "undefined") return false;
-    if (enabled && "Notification" in window && Notification.permission === "default") {
+    if (
+        enabled &&
+        "Notification" in window &&
+        Notification.permission === "default"
+    ) {
         try {
             await Notification.requestPermission();
         } catch {
@@ -53,7 +59,10 @@ export async function setNotificationsPreference(enabled: boolean): Promise<bool
  * Gemini 처럼 사용자가 질문을 던져놓고 다른 탭/창을 보고 있거나 설정 화면 등 다른 곳으로 이동했을 때
  * 푸시 알림이 켜져 있으면 데스크톱 알림 + 인앱 토스트 이벤트를 발생시킵니다.
  */
-export function notifyChatResponseReady(sessionTitle: string, answerPreview: string): void {
+export function notifyChatResponseReady(
+    sessionTitle: string,
+    answerPreview: string,
+): void {
     if (typeof window === "undefined") return;
     const { notifications } = getPreferences();
     if (!notifications) return;
@@ -69,10 +78,13 @@ export function notifyChatResponseReady(sessionTitle: string, answerPreview: str
     if (isHiddenOrUnfocused && "Notification" in window) {
         if (Notification.permission === "granted") {
             try {
-                const n = new Notification(`MES AI 답변 완료 · ${sessionTitle}`, {
-                    body: cleanPreview,
-                    tag: "mes-ai-reply",
-                });
+                const n = new Notification(
+                    `MES AI 답변 완료 · ${sessionTitle}`,
+                    {
+                        body: cleanPreview,
+                        tag: "mes-ai-reply",
+                    },
+                );
                 n.onclick = () => {
                     window.focus();
                     n.close();
@@ -86,18 +98,22 @@ export function notifyChatResponseReady(sessionTitle: string, answerPreview: str
     // 앱 내부에서 다른 대화방을 보고 있거나 백그라운드에서 돌아왔을 때를 위한 커스텀 이벤트
     window.dispatchEvent(
         new CustomEvent("mes-chat-reply-notification", {
-            detail: { title: sessionTitle, preview: cleanPreview, wasBackground: isHiddenOrUnfocused },
+            detail: {
+                title: sessionTitle,
+                preview: cleanPreview,
+                wasBackground: isHiddenOrUnfocused,
+            },
         }),
     );
 }
 
 /** 권한 코드를 한국어 명칭으로 변환 (2-1 요구사항 반영) */
 export function formatRoleLabel(role: string | undefined): string {
-    if (!role) return "유저";
+    if (!role) return "사용자";
     const upper = role.toUpperCase();
     if (upper.includes("MASTER")) return "최고 관리자";
     if (upper.includes("MANAGER") || upper.includes("MANEGER")) return "관리자";
-    if (upper.includes("USER")) return "유저";
+    if (upper.includes("USER")) return "사용자";
     return role;
 }
 
@@ -113,7 +129,9 @@ export function formatCreatedDate(date?: Temporal.PlainDateTime): string {
 
 export function recordLoginTimestamp(): void {
     if (typeof window === "undefined") return;
-    usePreferenceStore.getState().setLastLoginAt(Temporal.Now.plainDateTimeISO());
+    usePreferenceStore
+        .getState()
+        .setLastLoginAt(Temporal.Now.plainDateTimeISO());
 }
 
 export function getLastLoginTimestamp(): string {
@@ -129,3 +147,4 @@ export function getLastLoginTimestamp(): string {
         minute: "2-digit",
     });
 }
+
