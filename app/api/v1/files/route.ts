@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMockDb, resolveMockUserFromRequest } from "@/utils/mockStore";
 import { formatFileSize } from "@/utils/endpoints";
+import { nowMs } from "@/utils/time";
 
 // [Mock API] FileController: GET /api/v1/files & POST /api/v1/files?shared=true|false
 // 백엔드 FileService.getFiles() / uploadFile() 로직과 1:1 대응
@@ -161,8 +162,8 @@ export async function POST(request: Request) {
                 );
             }
         }
-        const fileId = `${shared ? "shared" : "user"}-file-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        const uploadedAt = new Date().toISOString();
+        const fileId = `${shared ? "shared" : "user"}-file-${nowMs()}-${Math.random().toString(36).slice(2, 7)}`;
+        const uploadedAt = Temporal.Now.plainDateTimeISO();
 
         // 텍스트/CSV 계열 파일이면 실제 내용을 일부 읽어 RAG 파싱 데이터로 보관
         let extractedText = "";

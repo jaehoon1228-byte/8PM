@@ -10,7 +10,9 @@ import type {
     FileMetadataDto,
     Message,
     UploadedFile,
+    UserInfo,
 } from "@/types/dashboard";
+import { parseOptionalDateTime } from "@/utils/time";
 
 export const BACKEND_BASE_URL =
     process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
@@ -43,20 +45,57 @@ export const ENDPOINTS = {
         `/api/v1/files/${encodeURIComponent(fileId)}`, // DELETE: 파일 삭제
 } as const;
 
-export function formatTime(dateInput: Date | string | undefined): string {
-    const date = dateInput ? new Date(dateInput) : new Date();
-    if (Number.isNaN(date.getTime())) {
-        return new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    }
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+/** 메시지/파일 표시용 시각 (HH:mm). 값이 없거나 잘못되면 현재 시각 */
+export function formatTime(dateInput?: Temporal.PlainDateTime | string): string {
+    const dateTime =
+        typeof dateInput === "string"
+            ? parseOptionalDateTime(dateInput)
+            : dateInput;
+    return (dateTime ?? Temporal.Now.plainDateTimeISO()).toLocaleString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 }
 
 export function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
+
+/** UserController 응답(JSON 원형) → UI 사용자 정보 */
+export const toUserInfo = (
+    dto: Omit<UserInfo, "createdAt"> & { createdAt?: string },
+): UserInfo => ({
+    ...dto,
+    createdAt: parseOptionalDateTime(dto.createdAt),
+});
+
+/** 서버 → 클라이언트 props 전달용 직렬화 (PlainDateTime → ISO 문자열) */
+export const serializeUploadedFile = (
+    file: UploadedFile,
+): Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string } => ({
+    ...file,
+    uploadedAt: file.uploadedAt?.toString(),
+});
+
+/** 클라이언트에서 props 복원 (ISO 문자열 → PlainDateTime) */
+export const reviveUploadedFile = (
+    file: Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string },
+): UploadedFile => ({
+    ...file,
+    uploadedAt: parseOptionalDateTime(file.uploadedAt),
+});
+
+/** 서버에서 받은 사원별 파일 맵 복원 (key: employeeId) */
+export const reviveUploadedFileMap = (
+    map: Record<number, (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[]>,
+): Record<number, UploadedFile[]> => {
+    const result: Record<number, UploadedFile[]> = {};
+    for (const key of Object.keys(map)) {
+        const id = Number(key);
+        result[id] = map[id].map(reviveUploadedFile);
+    }
+    return result;
+};
 
 export const toChatSession = (dto: ChatSessionResponseDto): ChatSession => ({
     id: dto.sessionId,
@@ -103,7 +142,7 @@ export const toUploadedFile = (
                 : dto.fileType
                   ? dto.fileType.toUpperCase()
                   : "",
-        uploadedAt: dto.uploadedAt ? String(dto.uploadedAt) : undefined,
+        uploadedAt: parseOptionalDateTime(dto.uploadedAt),
         employeeId: resolvedEmployeeId,
         companyId: resolvedCompanyId,
         shared: dto.shared,

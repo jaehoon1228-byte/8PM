@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import type { UserInfo } from "@/types/dashboard";
 import { api } from "@/utils/api";
-import { logout } from "@/utils/dashboardApi";
+import { logout, removeStoredPersonalFiles } from "@/utils/dashboardApi";
+import { removeStoredChatSessions } from "@/utils/store/chatSessionStore";
 import {
     formatCreatedDate,
     formatRoleLabel,
@@ -101,7 +102,13 @@ export default function SettingsModal({
         try {
             await api.get("/api/v1/users/me");
             setTokenState("valid");
-            setLastVerifiedAt(new Date().toLocaleTimeString("ko-KR"));
+            setLastVerifiedAt(
+                Temporal.Now.plainTimeISO().toLocaleString("ko-KR", {
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric",
+                }),
+            );
         } catch {
             setTokenState("expired");
         }
@@ -116,8 +123,8 @@ export default function SettingsModal({
         ) {
             return;
         }
-        localStorage.removeItem(`mes_chat_sessions_${userInfo.employeeId}`);
-        localStorage.removeItem(`mes_uploaded_files_${userInfo.employeeId}`);
+        removeStoredChatSessions(userInfo.employeeId);
+        removeStoredPersonalFiles(userInfo.employeeId);
         onClearLocalCache?.();
         alert("브라우저 로컬 캐시가 초기화되었습니다.");
     };

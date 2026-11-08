@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         email: dto.email.trim(),
         password: dto.password,
         role: dto.role as UserRole,
-        createdAt: new Date().toISOString(),
+        createdAt: Temporal.Now.plainDateTimeISO(),
     });
 
     return new NextResponse("계정이 성공적으로 생성 완료.", { status: 201 });

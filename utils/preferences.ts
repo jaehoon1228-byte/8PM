@@ -1,12 +1,7 @@
 // =====================================================================
 // 앱 환경설정(다크모드 / 푸시알림) & 권한 표기 & 브라우저 알림 유틸리티
 // =====================================================================
-
-const PREF_KEYS = {
-    darkMode: "mes_pref_dark_mode",
-    notifications: "mes_pref_notifications",
-    lastLoginAt: "mes_security_last_login_at",
-} as const;
+import { ThemeMode, usePreferenceStore } from "@/utils/store/preferenceStore";
 
 export const PREFERENCES_EVENT = "mes-preferences-change";
 
@@ -19,11 +14,10 @@ export function getPreferences(): AppPreferences {
     if (typeof window === "undefined") {
         return { darkMode: false, notifications: true };
     }
-    const darkRaw = localStorage.getItem(PREF_KEYS.darkMode);
-    const notifRaw = localStorage.getItem(PREF_KEYS.notifications);
+    const { theme, notifications } = usePreferenceStore.getState();
     return {
-        darkMode: darkRaw === "true",
-        notifications: notifRaw === null ? true : notifRaw === "true",
+        darkMode: theme === ThemeMode.Dark,
+        notifications,
     };
 }
 
@@ -34,7 +28,9 @@ export function applyThemeClass(darkMode: boolean): void {
 
 export function setDarkModePreference(enabled: boolean): void {
     if (typeof window === "undefined") return;
-    localStorage.setItem(PREF_KEYS.darkMode, String(enabled));
+    usePreferenceStore
+        .getState()
+        .setTheme(enabled ? ThemeMode.Dark : ThemeMode.Light);
     applyThemeClass(enabled);
     window.dispatchEvent(new Event(PREFERENCES_EVENT));
 }
@@ -48,7 +44,7 @@ export async function setNotificationsPreference(enabled: boolean): Promise<bool
             // 권한 요청 실패 무시
         }
     }
-    localStorage.setItem(PREF_KEYS.notifications, String(enabled));
+    usePreferenceStore.getState().setNotifications(enabled);
     window.dispatchEvent(new Event(PREFERENCES_EVENT));
     return enabled;
 }
@@ -113,11 +109,9 @@ export function isManagerOrAbove(role?: string): boolean {
 }
 
 /** 계정 생성일자 포맷 (YYYY년 MM월 DD일) */
-export function formatCreatedDate(dateStr?: string): string {
-    if (!dateStr) return "2026년 06월 09일";
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("ko-KR", {
+export function formatCreatedDate(date?: Temporal.PlainDateTime): string {
+    if (!date) return "2026년 06월 09일";
+    return date.toLocaleString("ko-KR", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -126,14 +120,15 @@ export function formatCreatedDate(dateStr?: string): string {
 
 export function recordLoginTimestamp(): void {
     if (typeof window === "undefined") return;
-    localStorage.setItem(PREF_KEYS.lastLoginAt, new Date().toISOString());
+    usePreferenceStore.getState().setLastLoginAt(Temporal.Now.plainDateTimeISO());
 }
 
 export function getLastLoginTimestamp(): string {
     if (typeof window === "undefined") return "-";
-    const raw = localStorage.getItem(PREF_KEYS.lastLoginAt);
-    const d = raw ? new Date(raw) : new Date();
-    return d.toLocaleString("ko-KR", {
+    const lastLoginAt =
+        usePreferenceStore.getState().lastLoginAt ??
+        Temporal.Now.plainDateTimeISO();
+    return lastLoginAt.toLocaleString("ko-KR", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",

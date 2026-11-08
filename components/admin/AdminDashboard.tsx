@@ -50,13 +50,18 @@ import {
     uploadFiles,
 } from "@/utils/dashboardApi";
 import {
+    reviveUploadedFile,
+    reviveUploadedFileMap,
+    toUserInfo,
+} from "@/utils/endpoints";
+import {
     formatCreatedDate,
     formatRoleLabel,
     isManagerOrAbove,
 } from "@/utils/preferences";
 
 interface AdminDashboardProps {
-    userInfo: UserInfo;
+    userInfo: NonNullable<AdminInitialData["userInfo"]>;
     initialData?: AdminInitialData;
 }
 
@@ -111,7 +116,7 @@ export default function AdminDashboard({
 
     // -------------------- 1. 맨 위: 공용 데이터 파일 상태 (SSR 초기값 우선) --
     const [sharedFiles, setSharedFiles] = useState<UploadedFile[]>(
-        initialData?.sharedFiles ?? [],
+        initialData?.sharedFiles?.map(reviveUploadedFile) ?? [],
     );
     const [sharedSearchQuery, setSharedSearchQuery] = useState("");
     const [isLoadingShared, setIsLoadingShared] = useState(
@@ -122,7 +127,7 @@ export default function AdminDashboard({
 
     // -------------------- 2. 밑: 사원 목록 & 개별 파일 토글 상태 (SSR 초기값 우선)
     const [allFetchedUsers, setAllFetchedUsers] = useState<UserInfo[]>(
-        initialData?.companyUsers ?? [],
+        initialData?.companyUsers?.map(toUserInfo) ?? [],
     );
     const [userSearchQuery, setUserSearchQuery] = useState("");
     const [isLoadingUsers, setIsLoadingUsers] = useState(
@@ -205,7 +210,7 @@ export default function AdminDashboard({
     );
     const [userFilesMap, setUserFilesMap] = useState<
         Record<number, UploadedFile[]>
-    >(initialData?.userFilesMap ?? {});
+    >(initialData?.userFilesMap ? reviveUploadedFileMap(initialData.userFilesMap) : {});
     const [loadingUserFilesIds, setLoadingUserFilesIds] = useState<Set<number>>(
         new Set(),
     );

@@ -1,4 +1,5 @@
 import ky, { KyRequest } from "ky";
+import { nowMs } from "@/utils/time";
 
 export const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
@@ -22,14 +23,14 @@ export function setCachedAccessToken(token: string | null): void {
         cachedAccessToken = token.startsWith("Bearer ")
             ? token
             : `Bearer ${token}`;
-        cachedTokenExpiresAt = Date.now() + ACCESS_TOKEN_TTL_MS;
+        cachedTokenExpiresAt = nowMs() + ACCESS_TOKEN_TTL_MS;
     } else {
         clearCachedAccessToken();
     }
 }
 
 async function fetchOrReuseAccessToken(forceRefresh = false): Promise<string | null> {
-    const now = Date.now();
+    const now = nowMs();
     if (
         !forceRefresh &&
         cachedAccessToken &&
@@ -54,7 +55,7 @@ async function fetchOrReuseAccessToken(forceRefresh = false): Promise<string | n
                 const token = accessTokenResponse.headers.get("Authorization");
                 if (token) {
                     cachedAccessToken = token;
-                    cachedTokenExpiresAt = Date.now() + ACCESS_TOKEN_TTL_MS;
+                    cachedTokenExpiresAt = nowMs() + ACCESS_TOKEN_TTL_MS;
                     return token;
                 }
             }

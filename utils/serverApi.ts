@@ -12,12 +12,12 @@ import type {
     ChatSessionResponseDto,
     DashboardInitialData,
     FileMetadataDto,
-    UploadedFile,
     UserInfo,
 } from "@/types/dashboard";
 import {
     BACKEND_BASE_URL,
     ENDPOINTS,
+    serializeUploadedFile,
     toChatSession,
     toUploadedFile,
 } from "@/utils/endpoints";
@@ -119,7 +119,11 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
 
     const { client } = auth;
     const [userInfo, chatSessions, files] = await Promise.all([
-        safe("사용자 정보", () => client.get(ENDPOINTS.me).json<UserInfo>()),
+        safe("사용자 정보", () =>
+            client
+                .get(ENDPOINTS.me)
+                .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
+        ),
         safe(
             "대화방 목록",
             async () =>
@@ -154,7 +158,7 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
             userInfo,
             // 대화방 목록 조회 API 가 아직 미구현(null)이더라도 빈 배열을 내려 불필요한 CSR 재요청 방지
             chatSessions: chatSessions ?? [],
-            files: personalFiles,
+            files: personalFiles.map(serializeUploadedFile),
         },
     };
 }
@@ -189,10 +193,17 @@ export async function getAdminInitialData(): Promise<AdminSSRResult> {
 
     const { client } = auth;
     const [userInfo, allUsers, allFiles] = await Promise.all([
-        safe("관리자 정보", () => client.get(ENDPOINTS.me).json<UserInfo>()),
+        safe("관리자 정보", () =>
+            client
+                .get(ENDPOINTS.me)
+                .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
+        ),
         safe(
             "사원 목록",
-            () => client.get(ENDPOINTS.users).json<UserInfo[]>(),
+            () =>
+                client
+                    .get(ENDPOINTS.users)
+                    .json<(Omit<UserInfo, "createdAt"> & { createdAt?: string })[]>(),
             true,
         ),
         safe(
@@ -224,10 +235,10 @@ export async function getAdminInitialData(): Promise<AdminSSRResult> {
     const sharedFiles = allFiles
         ? allFiles
               .filter((f) => f.shared === true)
-              .map((f) => ({ ...f, shared: true }))
+              .map((f) => ({ ...serializeUploadedFile(f), shared: true }))
         : null;
 
-    let userFilesMap: Record<number, UploadedFile[]> | null = null;
+    let userFilesMap: AdminInitialData["userFilesMap"] = null;
     if (companyUsers && allFiles) {
         userFilesMap = {};
         for (const member of companyUsers) {
@@ -238,7 +249,7 @@ export async function getAdminInitialData(): Promise<AdminSSRResult> {
                 if (!userFilesMap[file.employeeId]) {
                     userFilesMap[file.employeeId] = [];
                 }
-                userFilesMap[file.employeeId].push(file);
+                userFilesMap[file.employeeId].push(serializeUploadedFile(file));
             }
         }
     }

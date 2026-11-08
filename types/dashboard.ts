@@ -1,6 +1,7 @@
 // =====================================================================
 // 메인(대시보드) 화면에서 사용하는 타입 정의
 //  - 백엔드(MES-AI-ChatBot-Web-BackEnd) 실제 DTO / Entity 와 1:1 매핑
+//  - UI 타입의 시간 필드는 Temporal.PlainDateTime 이며, DTO 의 시간 필드는 JSON 원형인 ISO 문자열
 // =====================================================================
 
 // ---------------------------- UI 타입 ----------------------------------
@@ -29,32 +30,35 @@ export interface UserInfo {
     username: string;
     email: string;
     role: UserRole | string;
-    createdAt?: string;
+    createdAt?: Temporal.PlainDateTime;
 }
 
 export interface UploadedFile {
     id: string; // 백엔드 fileId (UUID 문자열)
     name: string;
     size: string;
-    uploadedAt?: string;
+    uploadedAt?: Temporal.PlainDateTime;
     employeeId?: number;
     companyId?: number;
     shared?: boolean;
 }
 
-/** 서버(SSR)에서 미리 받아온 초기 데이터. null 이면 SSR 실패 → 클라이언트(CSR)에서 다시 요청 */
+/**
+ * 서버(SSR)에서 미리 받아온 초기 데이터. null 이면 SSR 실패 → 클라이언트(CSR)에서 다시 요청
+ *  - 서버 → 클라이언트 props 는 직렬화 가능해야 하므로 시간 필드는 ISO 문자열로 전달하고, 클라이언트에서 PlainDateTime 으로 복원
+ */
 export interface DashboardInitialData {
-    userInfo: UserInfo | null;
+    userInfo: (Omit<UserInfo, "createdAt"> & { createdAt?: string }) | null;
     chatSessions: ChatSession[] | null;
-    files: UploadedFile[] | null;
+    files: (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
 }
 
 /** 관리자 화면(/admin) 서버(SSR)에서 병렬로 미리 받아온 초기 데이터 */
 export interface AdminInitialData {
-    userInfo: UserInfo | null;
-    companyUsers: UserInfo[] | null;
-    sharedFiles: UploadedFile[] | null;
-    userFilesMap: Record<number, UploadedFile[]> | null;
+    userInfo: (Omit<UserInfo, "createdAt"> & { createdAt?: string }) | null;
+    companyUsers: (Omit<UserInfo, "createdAt"> & { createdAt?: string })[] | null;
+    sharedFiles: (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
+    userFilesMap: Record<number, (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[]> | null;
 }
 
 // --------------------- 백엔드 DTO / Entity 타입 ------------------------
@@ -69,7 +73,7 @@ export interface ChatSessionResponseDto {
     companyId: number;
     employeeId: number;
     sessionTitle: string;
-    createdAt: Date; // LocalDateTime ISO 문자열
+    createdAt: string; // LocalDateTime ISO 문자열
 }
 
 /** ChatController POST /api/v1/chat/sessions/{sessionId}/ask 요청 (UserQuestionDto) */
@@ -84,7 +88,7 @@ export interface AskResponseDto {
     employeeId: number;
     sessionId: string;
     message: string;
-    recordedAt: Date;
+    recordedAt: string;
     role: "user" | "assistant" | string;
 }
 
@@ -93,7 +97,7 @@ export interface ChatHistoryDto {
     chatId: string;
     id?: string;
     message: string;
-    recordedAt: Date;
+    recordedAt: string;
     role: "user" | "assistant" | string;
 }
 
@@ -105,7 +109,7 @@ export interface FileMetadataDto {
     originName: string;
     fileType: string;
     shared?: boolean;
-    uploadedAt: Date | string;
+    uploadedAt: string;
 }
 
 /** UserController POST /api/v1/users 요청 (JoinRequestDTO) */
@@ -129,5 +133,5 @@ export interface FileUploadResponseDto {
 export interface FileDeleteResponseDto {
     fileId: string | null;
     message: string;
-    deletedAt: Date | null;
+    deletedAt: string | null;
 }

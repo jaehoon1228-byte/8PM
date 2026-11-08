@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMockDb } from "@/utils/mockStore";
+import { nowMs } from "@/utils/time";
 
 // [Mock API] POST /api/v1/login
 // - 로컬 개발 및 백엔드 미구동 환경 테스트용
@@ -33,8 +34,8 @@ export async function POST(request: Request) {
         }
 
         const identity = `${targetUser.companyId}_${targetUser.employeeId}`;
-        const mockAccessToken = `mock-access-${identity}-${Date.now()}`;
-        const mockRefreshToken = `mock-refresh-${identity}-${Date.now()}`;
+        const mockAccessToken = `mock-access-${identity}-${nowMs()}`;
+        const mockRefreshToken = `mock-refresh-${identity}-${nowMs()}`;
 
         return NextResponse.json(
             {
