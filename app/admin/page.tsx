@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import { getAdminInitialData } from "@/utils/serverApi";
-import { isManagerOrAbove } from "@/utils/preferences";
+import { isManagerOrAbove } from "@/utils/role";
 
 // [렌더링 전략] SSR + CSR 하이브리드
 //  1) SSR (Server Component): HttpOnly 쿠키(refreshToken)를 서버에서 읽어

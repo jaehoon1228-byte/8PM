@@ -57,8 +57,8 @@ import {
 import {
     formatCreatedDate,
     formatRoleLabel,
-    isManagerOrAbove,
 } from "@/utils/preferences";
+import { isManagerOrAbove } from "@/utils/role";
 
 interface AdminDashboardProps {
     userInfo: NonNullable<AdminInitialData["userInfo"]>;

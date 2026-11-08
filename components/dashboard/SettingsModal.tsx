@@ -28,11 +28,11 @@ import {
     formatRoleLabel,
     getLastLoginTimestamp,
     getPreferences,
-    isManagerOrAbove,
     PREFERENCES_EVENT,
     setDarkModePreference,
     setNotificationsPreference,
 } from "@/utils/preferences";
+import { isManagerOrAbove } from "@/utils/role";
 
 type SettingsView = "main" | "account" | "security";
 
