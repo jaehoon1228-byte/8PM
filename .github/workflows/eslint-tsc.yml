@@ -42,4 +42,5 @@ jobs:
           package-manager: npm
           token: ${{ secrets.GITHUB_TOKEN }} # optional
           extensions: "js,jsx,ts,tsx"
+          all-files: true
           annotations: true
