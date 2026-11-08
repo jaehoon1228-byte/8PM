@@ -7,7 +7,6 @@ on:
       - reopened
       - ready_for_review
   push:
-
 jobs:
   tsc:
     name: TypeScript 타입 검사
