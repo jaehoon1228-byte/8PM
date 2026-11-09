@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMockDb, resolveMockUserFromRequest } from "@/utils/mockStore";
+import { nowMs } from "@/utils/time";
 
 // [Mock API] POST /api/v1/chat/sessions/[sessionId]/ask
 // 백엔드 LlmChatService.askToLlm() 및 FileMetadataRepository.findAccessibleFiles() 규격 반영:
@@ -52,12 +53,12 @@ export async function POST(
         `해당 정보는 정확하지 않을 수 있으며, 사측에서는 해당 답변으로 인해 발생하는 모든 피해에 대해 어떠한 책임도 지지 않습니다.`;
 
     return NextResponse.json({
-        chatId: "mock-chat-" + Date.now(),
+        chatId: "mock-chat-" + nowMs(),
         companyId: currentUser.companyId,
         employeeId: currentUser.employeeId,
         sessionId,
         message: mockAiAnswer,
-        recordedAt: new Date().toISOString(),
+        recordedAt: Temporal.Now.plainDateTimeISO(),
         role: "assistant",
     });
 }

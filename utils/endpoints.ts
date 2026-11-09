@@ -10,11 +10,15 @@ import type {
     FileMetadataDto,
     Message,
     UploadedFile,
+    UserInfo,
 } from "@/types/dashboard";
+import { parseOptionalDateTime } from "@/utils/time";
 
+/** 백엔드 기본 주소 (환경변수 NEXT_PUBLIC_BACKEND_HOST, 없으면 localhost:8080) */
 export const BACKEND_BASE_URL =
     process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
 
+/** 백엔드 API 경로 모음. 정적 경로는 문자열, 동적 경로는 식별자를 받아 경로를 만드는 함수입니다. */
 export const ENDPOINTS = {
     // JWTController (@RequestMapping("/api/v1"))
     refresh: "/api/v1/jwt/refresh",
@@ -43,21 +47,76 @@ export const ENDPOINTS = {
         `/api/v1/files/${encodeURIComponent(fileId)}`, // DELETE: 파일 삭제
 } as const;
 
-export function formatTime(dateInput: Date | string | undefined): string {
-    const date = dateInput ? new Date(dateInput) : new Date();
-    if (Number.isNaN(date.getTime())) {
-        return new Date().toLocaleTimeString([], {
+/** 메시지/파일 표시용 시각 (HH:mm). 값이 없거나 잘못되면 현재 시각 */
+export function formatTime(
+    dateInput?: Temporal.PlainDateTime | string,
+): string {
+    const dateTime =
+        typeof dateInput === "string"
+            ? parseOptionalDateTime(dateInput)
+            : dateInput;
+    return (dateTime ?? Temporal.Now.plainDateTimeISO()).toLocaleString(
+        undefined,
+        {
             hour: "2-digit",
             minute: "2-digit",
-        });
-    }
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        },
+    );
 }
 
+/**
+ * 바이트 수를 MB 단위 문자열로 변환합니다 (소수점 한 자리).
+ * @param bytes 파일 크기 (바이트)
+ * @returns `2.4MB` 형식의 문자열
+ */
 export function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
+/** UserController 응답(JSON 원형) → UI 사용자 정보 (생성일 문자열을 PlainDateTime 으로 변환) */
+export const toUserInfo = (
+    dto: Omit<UserInfo, "createdAt"> & { createdAt?: string },
+): UserInfo => ({
+    ...dto,
+    createdAt: parseOptionalDateTime(dto.createdAt),
+});
+
+/** 서버 → 클라이언트 props 전달용 직렬화 (PlainDateTime → ISO 문자열) */
+export const serializeUploadedFile = (
+    file: UploadedFile,
+): Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string } => ({
+    ...file,
+    uploadedAt: file.uploadedAt?.toString(),
+});
+
+/** 클라이언트에서 props 복원 (ISO 문자열 → PlainDateTime) */
+export const reviveUploadedFile = (
+    file: Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string },
+): UploadedFile => ({
+    ...file,
+    uploadedAt: parseOptionalDateTime(file.uploadedAt),
+});
+
+/** 서버에서 받은 사원별 파일 맵 복원 (key: employeeId) */
+export const reviveUploadedFileMap = (
+    map: Record<
+        number,
+        (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[]
+    >,
+): Record<number, UploadedFile[]> => {
+    const result: Record<number, UploadedFile[]> = {};
+    for (const key of Object.keys(map)) {
+        const id = Number(key);
+        result[id] = map[id].map(reviveUploadedFile);
+    }
+    return result;
+};
+
+/**
+ * 대화방 생성 응답 DTO를 UI 대화방 객체로 변환합니다 (메시지는 비어 있고 미로드 상태).
+ * @param dto ChatSessionResponseDto 응답 객체
+ * @returns 화면용 ChatSession
+ */
 export const toChatSession = (dto: ChatSessionResponseDto): ChatSession => ({
     id: dto.sessionId,
     title: dto.sessionTitle,
@@ -65,6 +124,11 @@ export const toChatSession = (dto: ChatSessionResponseDto): ChatSession => ({
     isLoaded: false,
 });
 
+/**
+ * 과거 대화 내역(histories) DTO를 UI 메시지로 변환합니다. role이 user면 사용자 메시지로 간주합니다.
+ * @param dto ChatHistoryDto 객체
+ * @returns 화면용 Message
+ */
 export const toMessageFromHistory = (dto: ChatHistoryDto): Message => ({
     id: dto.chatId || dto.id || `${dto.recordedAt}-${dto.role}`,
     text: dto.message,
@@ -72,6 +136,11 @@ export const toMessageFromHistory = (dto: ChatHistoryDto): Message => ({
     timestamp: formatTime(dto.recordedAt),
 });
 
+/**
+ * 질문(ask) 응답 DTO를 UI 메시지로 변환합니다. role이 user면 사용자 메시지로 간주합니다.
+ * @param dto AskResponseDto 응답 객체
+ * @returns 화면용 Message
+ */
 export const toMessageFromAsk = (dto: AskResponseDto): Message => ({
     id: dto.chatId || `${dto.recordedAt}-assistant`,
     text: dto.message,
@@ -79,6 +148,13 @@ export const toMessageFromAsk = (dto: AskResponseDto): Message => ({
     timestamp: formatTime(dto.recordedAt),
 });
 
+/**
+ * 파일 메타데이터 DTO를 UI 업로드 파일 객체로 변환합니다.
+ * employeeId가 객체로 중첩된 응답 형태도 처리하며, 클라이언트에서 아는 바이트 크기가 있으면 MB로 표시합니다.
+ * @param dto FileMetadataDto 객체
+ * @param clientByteSize 클라이언트가 알고 있는 파일 크기 (바이트, 선택)
+ * @returns 화면용 UploadedFile
+ */
 export const toUploadedFile = (
     dto: FileMetadataDto,
     clientByteSize?: number,
@@ -103,9 +179,10 @@ export const toUploadedFile = (
                 : dto.fileType
                   ? dto.fileType.toUpperCase()
                   : "",
-        uploadedAt: dto.uploadedAt ? String(dto.uploadedAt) : undefined,
+        uploadedAt: parseOptionalDateTime(dto.uploadedAt),
         employeeId: resolvedEmployeeId,
         companyId: resolvedCompanyId,
         shared: dto.shared,
     };
 };
+

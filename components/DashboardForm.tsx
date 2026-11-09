@@ -30,11 +30,22 @@ import {
     fetchChatSessions,
     fetchMyInfo,
     fetchPersonalFiles,
+    getStoredPersonalFiles,
     getStoredSharedFiles,
     isSessionExpired,
+    setStoredPersonalFiles,
     uploadFiles,
 } from "@/utils/dashboardApi";
-import { formatTime } from "@/utils/endpoints";
+import {
+    formatTime,
+    reviveUploadedFile,
+    toUserInfo,
+} from "@/utils/endpoints";
+import {
+    getStoredChatSessions,
+    setStoredChatSessions,
+} from "@/utils/store/chatSessionStore";
+import { nowMs } from "@/utils/time";
 import {
     applyThemeClass,
     getPreferences,
@@ -64,11 +75,6 @@ const EMPTY_INITIAL_DATA: DashboardInitialData = {
     files: null,
 };
 
-const STORAGE_KEYS = {
-    sessions: (empId: number) => `mes_chat_sessions_${empId}`,
-    files: (empId: number) => `mes_uploaded_files_${empId}`,
-};
-
 export default function DashboardForm({
     initialData = EMPTY_INITIAL_DATA,
 }: DashboardFormProps) {
@@ -77,13 +83,13 @@ export default function DashboardForm({
 
     // ---------------- 서버 데이터 (SSR 초기값) ----------------
     const [userInfo, setUserInfo] = useState<UserInfo | undefined>(
-        initialData.userInfo ?? undefined,
+        initialData.userInfo ? toUserInfo(initialData.userInfo) : undefined,
     );
     const [chatSessions, setChatSessions] = useState<ChatSession[]>(
         initialData.chatSessions ?? [],
     );
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
-        initialData.files ?? [],
+        initialData.files?.map(reviveUploadedFile) ?? [],
     );
 
     // ---------------- 클라이언트 UI 상태 (CSR) ----------------
@@ -122,14 +128,11 @@ export default function DashboardForm({
     const hydrateFromStorage = (employeeId: number) => {
         if (storageHydratedRef.current) return;
         try {
-            const savedSessions = localStorage.getItem(
-                STORAGE_KEYS.sessions(employeeId),
-            );
-            if (savedSessions) {
-                const parsed = JSON.parse(savedSessions) as ChatSession[];
+            const savedSessions = getStoredChatSessions(employeeId);
+            if (savedSessions.length > 0) {
                 setChatSessions((prev) => {
                     const existingIds = new Set(prev.map((s) => s.id));
-                    const restored = parsed
+                    const restored = savedSessions
                         .filter(
                             (s) =>
                                 !s.id.startsWith("temp-") &&
@@ -140,11 +143,8 @@ export default function DashboardForm({
                 });
             }
 
-            const savedFiles = localStorage.getItem(
-                STORAGE_KEYS.files(employeeId),
-            );
-            if (savedFiles) {
-                const parsed = JSON.parse(savedFiles) as UploadedFile[];
+            const parsed = getStoredPersonalFiles(employeeId);
+            if (parsed.length > 0) {
                 const sharedIds = new Set(
                     userInfo?.companyId
                         ? getStoredSharedFiles(userInfo.companyId).map(
@@ -290,10 +290,7 @@ export default function DashboardForm({
                     messages: [],
                     isLoaded: false,
                 }));
-            localStorage.setItem(
-                STORAGE_KEYS.sessions(userInfo.employeeId),
-                JSON.stringify(persistableSessions),
-            );
+            setStoredChatSessions(userInfo.employeeId, persistableSessions);
         } catch {
             // 스토리지 용량 초과 등은 무시
         }
@@ -302,10 +299,7 @@ export default function DashboardForm({
     useEffect(() => {
         if (!userInfo?.employeeId || !storageHydratedRef.current) return;
         try {
-            localStorage.setItem(
-                STORAGE_KEYS.files(userInfo.employeeId),
-                JSON.stringify(uploadedFiles),
-            );
+            setStoredPersonalFiles(userInfo.employeeId, uploadedFiles);
         } catch {
             // 스토리지 용량 초과 등은 무시
         }
@@ -388,14 +382,14 @@ export default function DashboardForm({
         if (sendingChatId !== null) return;
 
         const userMsg: Message = {
-            id: `user-${Date.now()}`,
+            id: `user-${nowMs()}`,
             text,
             sender: "user",
-            timestamp: formatTime(new Date()),
+            timestamp: formatTime(),
         };
 
         const isNewSession = activeChatId === null;
-        const localChatId = activeChatId ?? `temp-${Date.now()}`;
+        const localChatId = activeChatId ?? `temp-${nowMs()}`;
 
         if (isNewSession) {
             const optimisticSession: ChatSession = {
@@ -475,10 +469,10 @@ export default function DashboardForm({
             );
             if (!expired) {
                 const errorMsg: Message = {
-                    id: `err-${Date.now()}`,
+                    id: `err-${nowMs()}`,
                     text: "답변을 받지 못했습니다. 잠시 후 다시 시도해주세요.",
                     sender: "bot",
-                    timestamp: formatTime(new Date()),
+                    timestamp: formatTime(),
                 };
                 setChatSessions((prev) =>
                     prev.map((chat) =>

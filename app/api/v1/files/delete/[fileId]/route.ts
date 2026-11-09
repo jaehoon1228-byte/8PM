@@ -12,6 +12,6 @@ export async function DELETE(
     return NextResponse.json({
         fileId,
         message: "파일 메타데이터가 성공적으로 삭제되었습니다. (Mock)",
-        deletedAt: new Date().toISOString(),
+        deletedAt: Temporal.Now.plainDateTimeISO(),
     });
 }

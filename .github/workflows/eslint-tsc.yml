@@ -40,3 +40,7 @@ jobs:
         uses: sibiraj-s/action-eslint@v4
         with:
           package-manager: npm
+          token: ${{ secrets.GITHUB_TOKEN }} # optional
+          extensions: "js,jsx,ts,tsx"
+          all-files: true
+          annotations: true

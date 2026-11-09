@@ -21,17 +21,19 @@ import {
 } from "lucide-react";
 import type { UserInfo } from "@/types/dashboard";
 import { api } from "@/utils/api";
-import { logout } from "@/utils/dashboardApi";
+import { logout, removeStoredPersonalFiles } from "@/utils/dashboardApi";
+import { removeStoredChatSessions } from "@/utils/store/chatSessionStore";
 import {
     formatCreatedDate,
     formatRoleLabel,
     getLastLoginTimestamp,
     getPreferences,
-    isManagerOrAbove,
     PREFERENCES_EVENT,
     setDarkModePreference,
     setNotificationsPreference,
 } from "@/utils/preferences";
+import { isManagerOrAbove } from "@/utils/role";
+import { ThemeMode } from "@/utils/store/preferenceStore";
 
 type SettingsView = "main" | "account" | "security";
 
@@ -51,7 +53,7 @@ export default function SettingsModal({
     const router = useRouter();
     const [view, setView] = useState<SettingsView>("main");
     const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(false);
+    const [theme, setTheme] = useState<ThemeMode>(ThemeMode.Light);
 
     // 2-2 보안 탭 상태
     const [tokenState, setTokenState] = useState<
@@ -63,7 +65,7 @@ export default function SettingsModal({
     useEffect(() => {
         const syncPrefs = () => {
             const prefs = getPreferences();
-            setDarkMode(prefs.darkMode);
+            setTheme(prefs.darkMode);
             setNotifications(prefs.notifications);
             if (typeof window !== "undefined" && "Notification" in window) {
                 setNotifPermission(Notification.permission);
@@ -91,8 +93,9 @@ export default function SettingsModal({
     };
 
     const handleToggleDarkMode = () => {
-        const next = !darkMode;
-        setDarkMode(next);
+        const next =
+            theme === ThemeMode.Light ? ThemeMode.Dark : ThemeMode.Light;
+        setTheme(next);
         setDarkModePreference(next);
     };
 
@@ -101,7 +104,13 @@ export default function SettingsModal({
         try {
             await api.get("/api/v1/users/me");
             setTokenState("valid");
-            setLastVerifiedAt(new Date().toLocaleTimeString("ko-KR"));
+            setLastVerifiedAt(
+                Temporal.Now.plainTimeISO().toLocaleString("ko-KR", {
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric",
+                }),
+            );
         } catch {
             setTokenState("expired");
         }
@@ -116,14 +125,14 @@ export default function SettingsModal({
         ) {
             return;
         }
-        localStorage.removeItem(`mes_chat_sessions_${userInfo.employeeId}`);
-        localStorage.removeItem(`mes_uploaded_files_${userInfo.employeeId}`);
+        removeStoredChatSessions(userInfo.employeeId);
+        removeStoredPersonalFiles(userInfo.employeeId);
         onClearLocalCache?.();
         alert("브라우저 로컬 캐시가 초기화되었습니다.");
     };
 
     const handleLogout = async () => {
-        if (!confirm("정말 로그아웃 하시겠습니까?")) return;
+        // if (!confirm("정말 로그아웃 하시겠습니까?")) return;
         await logout();
         router.push("/login");
     };
@@ -324,14 +333,14 @@ export default function SettingsModal({
                                             type="button"
                                             onClick={handleToggleDarkMode}
                                             className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
-                                                darkMode
+                                                theme === ThemeMode.Dark
                                                     ? "bg-indigo-600"
                                                     : "bg-slate-300 dark:bg-slate-700"
                                             }`}
                                         >
                                             <div
                                                 className={`w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${
-                                                    darkMode
+                                                    theme === ThemeMode.Dark
                                                         ? "translate-x-6"
                                                         : "translate-x-0"
                                                 }`}

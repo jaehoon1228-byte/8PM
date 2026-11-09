@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nowMs } from "@/utils/time";
 
 // [Mock API] POST /api/v1/files/upload
 // 백엔드 FileUploadResponseDto 규격
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
 
         const originName = file ? file.name : "업로드문서.pdf";
         const fileType = originName.split(".").pop() || "pdf";
-        const fileId = "mock-file-" + Date.now();
+        const fileId = "mock-file-" + nowMs();
 
         console.log("[Mock API] 파일 업로드 완료:", originName, `(${fileId})`);
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
                 fileId,
                 originName,
                 fileType,
-                uploadedAt: new Date().toISOString(),
+                uploadedAt: Temporal.Now.plainDateTimeISO(),
             },
             parsedData: [],
         });

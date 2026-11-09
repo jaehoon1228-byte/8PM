@@ -5,9 +5,19 @@ import { getMockDb, resolveMockUserFromRequest } from "@/utils/mockStore";
 // [Mock API] UserController: GET /api/v1/users & POST /api/v1/users
 // 백엔드 UserService.getUserForAdmin() / createUser() 로직과 1:1 대응
 
+/**
+ * 비밀번호 정책 정규식입니다.
+ * 8~20자, 영문/숫자/특수문자(@$!%*#?&)를 각각 1개 이상 포함해야 합니다.
+ */
 const PASSWORD_REGEX =
     /^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[@$!%*#?&])[A-Za-z0-9@$!%*#?&]{8,20}$/;
 
+/**
+ * 사용자 목록을 조회합니다 (Mock UserController GET).
+ * 최고관리자는 전체 사용자를, 중간관리자는 본인 회사의 최고관리자를 제외한 사용자를 조회합니다. 일반 사원은 403 을 반환합니다.
+ * @param request 현재 HTTP 요청 (요청자 식별에 사용)
+ * @returns 사용자 목록 JSON 응답 (비밀번호 제외). 권한이 없으면 403 텍스트 응답
+ */
 export async function GET(request: Request) {
     const currentUser = resolveMockUserFromRequest(request);
     const db = getMockDb();
@@ -41,6 +51,12 @@ export async function GET(request: Request) {
     return NextResponse.json(payload);
 }
 
+/**
+ * 사용자 계정을 생성합니다 (Mock UserController POST).
+ * 요청자 권한, 필수값, 비밀번호 정책, 중간관리자의 생성 범위(상위 권한 및 타 회사 불가), 중복 사원 여부를 검증합니다.
+ * @param request 생성할 사용자 정보(JoinRequestDto)를 담은 JSON 요청
+ * @returns 생성 성공 시 201, 검증 실패 시 400/403/409 텍스트 응답
+ */
 export async function POST(request: Request) {
     const currentUser = resolveMockUserFromRequest(request);
     const db = getMockDb();
@@ -51,7 +67,9 @@ export async function POST(request: Request) {
         });
     }
 
-    const dto = (await request.json().catch(() => null)) as Partial<JoinRequestDto> | null;
+    const dto = (await request
+        .json()
+        .catch(() => null)) as Partial<JoinRequestDto> | null;
     if (
         !dto ||
         dto.companyId === undefined ||
@@ -113,7 +131,7 @@ export async function POST(request: Request) {
         email: dto.email.trim(),
         password: dto.password,
         role: dto.role as UserRole,
-        createdAt: new Date().toISOString(),
+        createdAt: Temporal.Now.plainDateTimeISO(),
     });
 
     return new NextResponse("계정이 성공적으로 생성 완료.", { status: 201 });

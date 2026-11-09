@@ -6,6 +6,7 @@
 import { isHTTPError } from "ky";
 import { api, clearCachedAccessToken } from "@/utils/api";
 import { clearRefreshToken, getRefreshToken } from "@/utils/createHttpOnlyCookie";
+import { resetStores } from "@/utils/store/resetStores";
 import type {
     AskResponseDto,
     ChatHistoryDto,
@@ -27,7 +28,9 @@ import {
     toMessageFromAsk,
     toMessageFromHistory,
     toUploadedFile,
+    toUserInfo,
 } from "@/utils/endpoints";
+import { useFileStore } from "@/utils/store/fileStore";
 
 /** 인터셉터의 재발급까지 실패한 경우(=세션 완전 만료)인지 판별 */
 export function isSessionExpired(error: unknown): boolean {
@@ -63,7 +66,11 @@ export async function extractErrorMessage(
 
 /** UserController: GET /api/v1/users/me */
 export async function fetchMyInfo(): Promise<UserInfo> {
-    return api.get(ENDPOINTS.me).json<UserInfo>();
+    return toUserInfo(
+        await api
+            .get(ENDPOINTS.me)
+            .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
+    );
 }
 
 /**
@@ -144,61 +151,43 @@ export async function askToLlm(sessionId: string, question: string): Promise<Mes
     return toMessageFromAsk(response);
 }
 
-export const FILE_STORAGE_KEYS = {
-    personal: (empId: number) => `mes_uploaded_files_${empId}`,
-    shared: (companyId: number) => `mes_shared_files_${companyId}`,
-} as const;
-
+/** 회사 공용 파일 메타데이터 로컬 조회 (companyId 기준) */
 export function getStoredSharedFiles(companyId: number): UploadedFile[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(FILE_STORAGE_KEYS.shared(companyId));
-        if (!raw) return [];
-        return JSON.parse(raw) as UploadedFile[];
-    } catch {
-        return [];
-    }
+    return useFileStore.getState().sharedFiles[companyId] ?? [];
 }
 
+/** 회사 공용 파일 메타데이터 로컬 저장 (companyId 기준) */
 export function setStoredSharedFiles(
     companyId: number,
     files: UploadedFile[],
 ): void {
-    if (typeof window === "undefined") return;
     try {
-        localStorage.setItem(
-            FILE_STORAGE_KEYS.shared(companyId),
-            JSON.stringify(files),
-        );
+        useFileStore.getState().setSharedFiles(companyId, files);
     } catch {
         // 스토리지 제한 무시
     }
 }
 
+/** 사원 개별 파일 메타데이터 로컬 조회 (employeeId 기준) */
 export function getStoredPersonalFiles(employeeId: number): UploadedFile[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(FILE_STORAGE_KEYS.personal(employeeId));
-        if (!raw) return [];
-        return JSON.parse(raw) as UploadedFile[];
-    } catch {
-        return [];
-    }
+    return useFileStore.getState().personalFiles[employeeId] ?? [];
 }
 
+/** 사원 개별 파일 메타데이터 로컬 저장 (employeeId 기준) */
 export function setStoredPersonalFiles(
     employeeId: number,
     files: UploadedFile[],
 ): void {
-    if (typeof window === "undefined") return;
     try {
-        localStorage.setItem(
-            FILE_STORAGE_KEYS.personal(employeeId),
-            JSON.stringify(files),
-        );
+        useFileStore.getState().setPersonalFiles(employeeId, files);
     } catch {
         // 스토리지 제한 무시
     }
+}
+
+/** 사원 개별 파일 메타데이터 로컬 삭제 (employeeId 기준) */
+export function removeStoredPersonalFiles(employeeId: number): void {
+    useFileStore.getState().removePersonalFiles(employeeId);
 }
 
 /**
@@ -271,6 +260,14 @@ export async function uploadSingleFile(
     };
 }
 
+/**
+ * 여러 파일을 순차적으로 업로드합니다. 파일 하나가 실패해도 나머지는 계속 업로드합니다.
+ * @param files 업로드할 파일 목록
+ * @param shared true 이면 회사 공용 파일로, false 이면 개인 파일로 업로드합니다
+ * @param targetEmployeeId 개인 파일을 올릴 대상 사원 ID (관리자가 사원 대신 업로드할 때)
+ * @param targetCompanyId 업로드 대상 회사일련번호 (최고관리자가 회사를 선택했을 때)
+ * @returns 성공한 파일 목록(`uploaded`)과 실패한 파일의 이름 및 사유(`failed`)
+ */
 export async function uploadFiles(
     files: File[],
     shared = false,
@@ -318,7 +315,10 @@ export async function deleteFile(fileId: string): Promise<FileDeleteResponseDto>
 
 /** UserController: GET /api/v1/users (본인 회사 유저 목록 조회) */
 export async function fetchAdminUsers(): Promise<UserInfo[]> {
-    return api.get(ENDPOINTS.users).json<UserInfo[]>();
+    const response = await api
+        .get(ENDPOINTS.users)
+        .json<(Omit<UserInfo, "createdAt"> & { createdAt?: string })[]>();
+    return response.map(toUserInfo);
 }
 
 /** UserController: POST /api/v1/users (하위관리자 계정 생성) */
@@ -329,9 +329,7 @@ export async function createAdminUser(dto: JoinRequestDto): Promise<string> {
 /** UserController: DELETE /api/v1/users/{target} (유저 삭제) */
 export async function deleteAdminUser(targetEmployeeId: number): Promise<string> {
     const res = await api.delete(ENDPOINTS.deleteUser(targetEmployeeId)).text();
-    if (typeof window !== "undefined") {
-        localStorage.removeItem(FILE_STORAGE_KEYS.personal(targetEmployeeId));
-    }
+    removeStoredPersonalFiles(targetEmployeeId);
     return res;
 }
 
@@ -504,5 +502,6 @@ export async function logout(): Promise<void> {
     } finally {
         clearCachedAccessToken();
         await clearRefreshToken();
+        resetStores();
     }
 }

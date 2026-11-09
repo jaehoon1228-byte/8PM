@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { getMockDb, resolveMockUserFromRequest } from "@/utils/mockStore";
 import { formatFileSize } from "@/utils/endpoints";
+import { nowMs } from "@/utils/time";
 
 // [Mock API] FileController: GET /api/v1/files & POST /api/v1/files?shared=true|false
 // 백엔드 FileService.getFiles() / uploadFile() 로직과 1:1 대응
 
+/**
+ * 파일 목록을 조회합니다 (Mock FileController GET).
+ * 최고관리자는 companyId 로 회사를 선택할 수 있고, 쿼리 조건(shared, allCompany, employeeId)에 따라 공용/개인/전체 파일을 필터링합니다.
+ * 일반 사원은 항상 본인의 개인 파일만 조회합니다.
+ * @param request 현재 HTTP 요청 (쿼리 파라미터 shared, allCompany, employeeId, companyId 포함)
+ * @returns 필터링된 파일 메타데이터 목록을 담은 JSON 응답
+ */
 export async function GET(request: Request) {
     const currentUser = resolveMockUserFromRequest(request);
     const db = getMockDb();
@@ -54,6 +62,13 @@ export async function GET(request: Request) {
     );
 }
 
+/**
+ * 파일을 업로드합니다 (Mock FileController POST).
+ * 권한, 확장자(PDF/DOCX/XLSX/PPTX/CSV), 크기(10MB), 중복 여부를 검증한 뒤 메타데이터를 저장합니다.
+ * CSV 계열은 본문 일부를 파싱 데이터로 보관하고, 그 외 형식은 안내 문구를 파싱 데이터로 사용합니다.
+ * @param request 업로드할 multipart/form-data 요청 (file, 쿼리 shared, targetCompanyId, targetEmployeeId 포함)
+ * @returns 업로드 결과(fileData, parsedData)를 담은 JSON 응답. 실패 시 상태 코드와 메시지를 포함
+ */
 export async function POST(request: Request) {
     try {
         const currentUser = resolveMockUserFromRequest(request);
@@ -64,7 +79,8 @@ export async function POST(request: Request) {
         if (shared && currentUser.role === "ROLE_USER") {
             return NextResponse.json(
                 {
-                    message: "일반 사원은 공용 데이터 파일을 업로드할 권한이 없습니다.",
+                    message:
+                        "일반 사원은 공용 데이터 파일을 업로드할 권한이 없습니다.",
                     fileData: null,
                     parsedData: null,
                 },
@@ -80,9 +96,7 @@ export async function POST(request: Request) {
 
         const targetEmployeeParam = searchParams.get("targetEmployeeId");
         const ownerEmployeeId =
-            !shared &&
-            targetEmployeeParam &&
-            currentUser.role !== "ROLE_USER"
+            !shared && targetEmployeeParam && currentUser.role !== "ROLE_USER"
                 ? Number(targetEmployeeParam)
                 : currentUser.employeeId;
 
@@ -161,8 +175,8 @@ export async function POST(request: Request) {
                 );
             }
         }
-        const fileId = `${shared ? "shared" : "user"}-file-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        const uploadedAt = new Date().toISOString();
+        const fileId = `${shared ? "shared" : "user"}-file-${nowMs()}-${Math.random().toString(36).slice(2, 7)}`;
+        const uploadedAt = Temporal.Now.plainDateTimeISO();
 
         // 텍스트/CSV 계열 파일이면 실제 내용을 일부 읽어 RAG 파싱 데이터로 보관
         let extractedText = "";

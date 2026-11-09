@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "../utils/api";
 import { logout } from "../utils/dashboardApi";
 import { isHTTPError } from "ky";
-import { isManagerOrAbove } from "../utils/preferences";
+import { isManagerOrAbove } from "../utils/role";
 
 interface UserInfo {
     companyId: number;
