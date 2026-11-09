@@ -5,32 +5,62 @@
 // =====================================================================
 import type { UserInfo, UserRole } from "@/types/dashboard";
 
+/**
+ * 백엔드 UserMember 엔티티에 대응하는 Mock 사용자 레코드입니다.
+ * `UserInfo` 필드에 로그인 검증용 비밀번호와 권한(role)을 더한 형태입니다.
+ */
 export interface MockUserRecord extends UserInfo {
+    /** 로그인 검증용 평문 비밀번호 (Mock 전용, 선택) */
     password?: string;
+    /** 사용자 권한 (ROLE_MASTER, ROLE_MANAGER, ROLE_USER 등) */
     role: UserRole;
 }
 
+/**
+ * 백엔드 FileMetadata 엔티티에 대응하는 Mock 파일 메타데이터 레코드입니다.
+ */
 export interface MockFileRecord {
+    /** 파일 고유 ID */
     fileId: string;
+    /** 소속 회사 ID */
     companyId: number;
+    /** 업로드한 사원 ID */
     employeeId: number;
+    /** 원본 파일명 */
     originName: string;
+    /** 파일 확장자 또는 형식 (pdf, docx, xlsx, csv 등) */
     fileType: string;
+    /** 회사 공용 파일 여부 (true 면 공용, false 면 개인 파일) */
     shared: boolean;
+    /** 업로드 일시 (타임존 없는 PlainDateTime) */
     uploadedAt: Temporal.PlainDateTime;
+    /** 파일 크기 표시 문자열 (예: "2.4MB") */
     size: string;
+    /** 파싱된 파일 본문 텍스트 (RAG 답변 근거로 사용) */
     parsedContent: string;
 }
 
+/**
+ * Mock DB 전체 구조입니다. 사용자 목록과 파일 목록을 보관합니다.
+ */
 interface MockDatabase {
+    /** 사용자 레코드 목록 */
     users: MockUserRecord[];
+    /** 파일 메타데이터 레코드 목록 */
     files: MockFileRecord[];
 }
 
+/** Mock DB 인스턴스를 globalThis에 보관하기 위한 전역 선언입니다. */
 declare global {
+    /** 인메모리 Mock DB 인스턴스 (초기화 전에는 undefined) */
     var __mesMockDb: MockDatabase | undefined;
 }
 
+/**
+ * 시드 데이터로 채워진 초기 Mock DB를 생성합니다.
+ * 회사 3곳(10, 20, 30)의 관리자/일반 사원 계정과 공용/개인 파일 샘플을 포함합니다.
+ * @returns 초기 상태의 Mock DB 객체
+ */
 function createInitialMockDatabase(): MockDatabase {
     return {
         users: [
@@ -250,7 +280,12 @@ function createInitialMockDatabase(): MockDatabase {
     };
 }
 
-/** 전역 인메모리 Mock DB 인스턴스를 반환합니다. */
+/**
+ * 전역 인메모리 Mock DB 인스턴스를 반환합니다.
+ * globalThis에 없으면 초기 시드로 생성하고, 이미 있으면 시드 중 누락된 사용자/파일만 추가합니다.
+ * (HMR 로 데이터가 사라지지 않도록 유지하면서 새 시드 데이터는 반영하기 위함)
+ * @returns 전역 Mock DB 인스턴스
+ */
 export function getMockDb(): MockDatabase {
     if (!globalThis.__mesMockDb) {
         globalThis.__mesMockDb = createInitialMockDatabase();
@@ -280,7 +315,13 @@ export function getMockDb(): MockDatabase {
     return globalThis.__mesMockDb;
 }
 
-/** 요청 헤더(Authorization 또는 Cookie)에서 현재 로그인한 사용자 정보를 추출합니다. */
+/**
+ * 요청 헤더(Authorization 또는 Cookie)에서 현재 로그인한 사용자 정보를 추출합니다.
+ * 토큰 형식 `mock-(access|refresh)-{companyId}_{employeeId}-`에서 식별자를 읽어 사용자를 찾고,
+ * 식별할 수 없으면 관리자(ROLE_MANAGER)를 기본 사용자로 반환합니다.
+ * @param request 현재 HTTP 요청 (없으면 기본 사용자를 반환)
+ * @returns 식별된 사용자 레코드, 식별할 수 없으면 기본 사용자
+ */
 export function resolveMockUserFromRequest(request?: Request): MockUserRecord {
     const db = getMockDb();
     const fallback =

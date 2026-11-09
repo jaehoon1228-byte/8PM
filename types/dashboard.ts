@@ -5,36 +5,56 @@
 // =====================================================================
 
 // ---------------------------- UI 타입 ----------------------------------
+/** 화면에 표시되는 각 채팅 메시지 */
 export interface Message {
+    /** 메시지 고유 ID (백엔드 chatId 또는 생성된 임시 ID) */
     id: string;
+    /** 메시지 본문 */
     text: string;
+    /** 발신자 (user: 사용자, bot: AI) */
     sender: "user" | "bot";
+    /** 표시용 시각 (HH:mm) */
     timestamp: string;
 }
 
+/** 화면에 표시되는 각 대화방 */
 export interface ChatSession {
-    id: string; // 백엔드 sessionId (UUID 문자열)
+    /** 백엔드 sessionId (UUID 문자열) */
+    id: string;
+    /** 대화방 제목 */
     title: string;
+    /** 대화방에 속한 메시지 목록 */
     messages: Message[];
     /** 서버에서 과거 대화 내역(/histories)을 이미 불러왔는지 여부 */
     isLoaded?: boolean;
 }
 
+/** 사용자 권한 코드 (최고관리자, 중간관리자, 하위관리자) */
 export type UserRole = "ROLE_MASTER" | "ROLE_MANAGER" | "ROLE_USER";
 
 /** UserController GET /api/v1/users/me → UserInfoResponseDTO */
 export interface UserInfo {
+    /** 소속 회사일련번호 */
     companyId: number;
+    /** 소속 회사명 */
     companyName?: string;
+    /** 사원번호 */
     employeeId: number;
+    /** 사원 이름 */
     username: string;
+    /** 사내 이메일 */
     email: string;
+    /** 권한 코드 */
     role: UserRole | string;
+    /** 계정 생성 일시 */
     createdAt?: Temporal.PlainDateTime;
 }
 
+/** 화면에서 사용하는 업로드 파일 메타데이터 */
 export interface UploadedFile {
-    id: string; // 백엔드 fileId (UUID 문자열)
+    /** 백엔드 fileId (UUID 문자열) */
+    id: string;
+    /** 파일 표시 이름 (원본 파일명) */
     name: string;
     size: string;
     uploadedAt?: Temporal.PlainDateTime;
@@ -50,15 +70,21 @@ export interface UploadedFile {
 export interface DashboardInitialData {
     userInfo: (Omit<UserInfo, "createdAt"> & { createdAt?: string }) | null;
     chatSessions: ChatSession[] | null;
-    files: (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
+    files:
+        (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
 }
 
 /** 관리자 화면(/admin) 서버(SSR)에서 병렬로 미리 받아온 초기 데이터 */
 export interface AdminInitialData {
     userInfo: (Omit<UserInfo, "createdAt"> & { createdAt?: string }) | null;
-    companyUsers: (Omit<UserInfo, "createdAt"> & { createdAt?: string })[] | null;
-    sharedFiles: (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
-    userFilesMap: Record<number, (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[]> | null;
+    companyUsers:
+        (Omit<UserInfo, "createdAt"> & { createdAt?: string })[] | null;
+    sharedFiles:
+        (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[] | null;
+    userFilesMap: Record<
+        number,
+        (Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string })[]
+    > | null;
 }
 
 // --------------------- 백엔드 DTO / Entity 타입 ------------------------
@@ -105,7 +131,8 @@ export interface ChatHistoryDto {
 export interface FileMetadataDto {
     fileId: string;
     companyId?: number;
-    employeeId?: number | { employeeId: number; companyId?: { companyId: number } };
+    employeeId?:
+        number | { employeeId: number; companyId?: { companyId: number } };
     originName: string;
     fileType: string;
     shared?: boolean;
@@ -135,3 +162,4 @@ export interface FileDeleteResponseDto {
     message: string;
     deletedAt: string | null;
 }
+

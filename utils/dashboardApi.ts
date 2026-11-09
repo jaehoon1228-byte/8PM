@@ -260,6 +260,14 @@ export async function uploadSingleFile(
     };
 }
 
+/**
+ * 여러 파일을 순차적으로 업로드합니다. 파일 하나가 실패해도 나머지는 계속 업로드합니다.
+ * @param files 업로드할 파일 목록
+ * @param shared true 이면 회사 공용 파일로, false 이면 개인 파일로 업로드합니다
+ * @param targetEmployeeId 개인 파일을 올릴 대상 사원 ID (관리자가 사원 대신 업로드할 때)
+ * @param targetCompanyId 업로드 대상 회사일련번호 (최고관리자가 회사를 선택했을 때)
+ * @returns 성공한 파일 목록(`uploaded`)과 실패한 파일의 이름 및 사유(`failed`)
+ */
 export async function uploadFiles(
     files: File[],
     shared = false,

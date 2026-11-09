@@ -5,6 +5,13 @@ import { getMockDb, resolveMockUserFromRequest } from "@/utils/mockStore";
 // [Mock API] UserController: DELETE /api/v1/users/{target} & PATCH /api/v1/users/{target}
 // 백엔드 UserService.deleteUser() / updateRole() 로직과 1:1 대응
 
+/**
+ * 사용자를 탈퇴시킵니다 (Mock UserController DELETE).
+ * 중간관리자는 같은 회사의 본인 또는 하위관리자만 탈퇴시킬 수 있습니다. 탈퇴 시 해당 사원의 개인 파일도 함께 삭제합니다.
+ * @param request 현재 HTTP 요청 (요청자 식별에 사용)
+ * @param context 동적 경로 파라미터 컨텍스트. `params.target` 은 대상 사원 ID 입니다.
+ * @returns 탈퇴 성공 시 200, 권한 없음 403, 대상 없음 404 텍스트 응답
+ */
 export async function DELETE(
     request: Request,
     context: { params: Promise<{ target: string }> },
@@ -53,6 +60,13 @@ export async function DELETE(
     return new NextResponse("회원이 탈퇴되었습니다.", { status: 200 });
 }
 
+/**
+ * 사용자의 권한을 변경합니다 (Mock UserController PATCH).
+ * 최고관리자만 호출할 수 있으며, 요청 본문으로 받은 권한 코드(ROLE_MASTER, ROLE_MANAGER, ROLE_USER)로 변경합니다.
+ * @param request 요청 본문에 새 권한 코드를 담은 HTTP 요청
+ * @param context 동적 경로 파라미터 컨텍스트. `params.target` 은 대상 사원 ID 입니다.
+ * @returns 변경 성공 시 200, 권한 없음 403, 대상 없음 404, 잘못된 권한 코드 400 텍스트 응답
+ */
 export async function PATCH(
     request: Request,
     context: { params: Promise<{ target: string }> },

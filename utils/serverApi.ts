@@ -31,6 +31,11 @@ type ServerAuth =
     | { status: "expired" }
     | { status: "ok"; client: KyInstance };
 
+/**
+ * HttpOnly 쿠키의 refreshToken으로 Access Token 을 발급받아 SSR용 ky 클라이언트를 생성합니다.
+ * 쿠키가 없으면 CSR로 위임하고, 401/403이면 세션 만료로 판단합니다.
+ * @returns 쿠키 없음(`no-cookie`), 세션 만료(`expired`), 또는 인증된 클라이언트(`ok`)
+ */
 async function createServerApi(): Promise<ServerAuth> {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get("refreshToken")?.value;
@@ -64,7 +69,14 @@ async function createServerApi(): Promise<ServerAuth> {
     return { status: "ok", client };
 }
 
-/** 개별 API 실패가 페이지 전체 SSR 을 깨뜨리지 않도록 null 로 변환 */
+/**
+ * 개별 API 호출을 감싸 실패가 페이지 전체 SSR을 깨뜨리지 않도록 null로 변환합니다.
+ * optional 이 true 이고 404/403/405 이면 아직 구현되지 않은 엔드포인트로 보고 조용히 null 을 반환합니다.
+ * @param label 로그에 표시할 조회 대상 이름
+ * @param task 실행할 비동기 작업
+ * @param optional 미구현 엔드포인트일 때 오류 로그를 생략할지 여부 (기본값 false)
+ * @returns 작업 결과, 실패하면 null
+ */
 async function safe<T>(
     label: string,
     task: () => Promise<T>,
@@ -91,13 +103,15 @@ async function safe<T>(
     }
 }
 
+/** 메인 화면 SSR 조회 결과: 세션 만료(`expired`) 또는 초기 데이터(`ok`) */
 export type DashboardSSRResult =
     { status: "expired" } | { status: "ok"; data: DashboardInitialData };
 
 /**
- * 메인 화면 초기 데이터를 서버에서 병렬 조회
+ * 메인 화면 초기 데이터를 서버에서 병렬 조회합니다.
  *  - GET /api/v1/users/me (UserController 구현 완료)
  *  - GET /api/v1/chat/sessions (spec.yaml 정의, 미구현 시 빈 배열로 안전하게 폴백)
+ * @returns 세션 만료 시 `expired`, 그 외에는 조회된 사용자/대화방/개인 파일 초기 데이터
  */
 export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
     const empty: DashboardInitialData = {
@@ -163,14 +177,16 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
     };
 }
 
+/** 관리자 화면 SSR 조회 결과: 세션 만료(`expired`) 또는 초기 데이터(`ok`) */
 export type AdminSSRResult =
     { status: "expired" } | { status: "ok"; data: AdminInitialData };
 
 /**
- * 관리자 화면(/admin) 초기 데이터를 서버에서 병렬 조회 (SSR)
+ * 관리자 화면(/admin) 초기 데이터를 서버에서 병렬 조회합니다 (SSR).
  *  - GET /api/v1/users/me (현재 로그인 관리자 정보)
  *  - GET /api/v1/users (소속 회사 사용자 목록)
  *  - GET /api/v1/files?allCompany=true (공용 파일 + 사원별 개별 파일 목록)
+ * @returns 세션 만료 시 `expired`, 그 외에는 관리자/사원/파일 초기 데이터
  */
 export async function getAdminInitialData(): Promise<AdminSSRResult> {
     const empty: AdminInitialData = {
@@ -203,7 +219,9 @@ export async function getAdminInitialData(): Promise<AdminSSRResult> {
             () =>
                 client
                     .get(ENDPOINTS.users)
-                    .json<(Omit<UserInfo, "createdAt"> & { createdAt?: string })[]>(),
+                    .json<
+                        (Omit<UserInfo, "createdAt"> & { createdAt?: string })[]
+                    >(),
             true,
         ),
         safe(

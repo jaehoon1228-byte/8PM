@@ -2,18 +2,34 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { parseOptionalDateTime } from "@/utils/time";
 
+/** 화면 테마 모드 */
 export enum ThemeMode {
     Light = "light",
     Dark = "dark",
 }
 
+/** 사용자 환경설정 스토어의 상태 및 액션 */
 interface PreferenceState {
+    /** 현재 테마 */
     theme: ThemeMode;
+    /** 푸시 알림 사용 여부 */
     notifications: boolean;
     /** 마지막 로그인 시각 (타임존 없는 PlainDateTime) */
     lastLoginAt: Temporal.PlainDateTime | null;
+    /**
+     * 테마를 변경합니다.
+     * @param theme 적용할 테마
+     */
     setTheme: (theme: ThemeMode) => void;
+    /**
+     * 푸시 알림 사용 여부를 변경합니다.
+     * @param enabled 사용 여부
+     */
     setNotifications: (enabled: boolean) => void;
+    /**
+     * 마지막 로그인 시각을 저장합니다.
+     * @param dateTime 로그인 시각
+     */
     setLastLoginAt: (dateTime: Temporal.PlainDateTime) => void;
 }
 
@@ -24,7 +40,10 @@ interface PersistedPreferenceState {
     lastLoginAt: string | null;
 }
 
-/** 테마 / 푸시 알림 / 마지막 로그인 시각 (브라우저 단위, 사용자 구분 없음) */
+/**
+ * 테마 / 푸시 알림 / 마지막 로그인 시각 스토어 (localStorage `mes-preferences`에 persist)
+ * 브라우저 단위로 저장되며 사용자 구분은 없습니다.
+ */
 export const usePreferenceStore = create<PreferenceState>()(
     persist(
         (set) => ({
@@ -49,8 +68,10 @@ export const usePreferenceStore = create<PreferenceState>()(
                 return {
                     ...current,
                     theme: saved?.theme ?? current.theme,
-                    notifications: saved?.notifications ?? current.notifications,
-                    lastLoginAt: parseOptionalDateTime(saved?.lastLoginAt) ?? null,
+                    notifications:
+                        saved?.notifications ?? current.notifications,
+                    lastLoginAt:
+                        parseOptionalDateTime(saved?.lastLoginAt) ?? null,
                 };
             },
         },
