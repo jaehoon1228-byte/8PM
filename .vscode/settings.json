@@ -2,5 +2,15 @@
     "js/ts.tsdk.path": "node_modules/typescript/lib",
     "files.associations": {
         "*.css": "tailwindcss"
+    },
+    "files.eol": "\r\n",
+    "editor.insertSpaces": true,
+    "editor.indentSize": 4,
+    "[yaml]": {
+        "editor.tabSize": 2
+    },
+    "[dockerfile][dockercompose]": {
+        "files.eol": "\n"
     }
 }
+
