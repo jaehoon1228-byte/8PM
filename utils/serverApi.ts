@@ -22,8 +22,10 @@ import {
     toUploadedFile,
 } from "@/utils/endpoints";
 
-// 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소 사용)
-const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST ?? BACKEND_BASE_URL;
+// 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소, 실제 배포 URL주소 사용)
+const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST || 
+                      process.env.NEXT_PUBLIC_API_URL || 
+                      "https://mes.thepji.kro.kr";
 
 /** SSR 인증 결과: 쿠키 없음 / 세션 만료 / 성공 */
 type ServerAuth =
