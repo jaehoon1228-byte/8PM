@@ -1,5 +1,6 @@
 "use client";
 
+
 // [렌더링 전략] CSR
 //  - 입력창(타이핑)·전송·자동 높이 조절 등 브라우저 이벤트에 전적으로 의존하는 영역
 //  - 입력값(input) 상태를 이 컴포넌트 내부에 두어, 타이핑할 때 사이드바/파일 목록까지
@@ -8,6 +9,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Paperclip, Send, User } from "lucide-react";
 import type { ChatSession } from "@/types/dashboard";
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+} from "recharts";
 
 interface ChatPanelProps {
     currentChat: ChatSession | undefined;
@@ -157,6 +167,23 @@ export default function ChatPanel({
                                         }`}
                                     >
                                         {msg.text}
+
+                                        {msg.chartData && msg.chartData.length > 0 && (
+                                            <div className="mt-4 w-full h-60 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={msg.chartData} margin={{top:5, right:10, left:-20, bottom:0}}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                                                        <YAxis tick={{ fontSize: 11 }} />
+                                                        <Tooltip 
+                                                            contentStyle={{ backgroundColor: "#1f2937", color: "#fff", borderRadius: "8px", fontSize: "12px" }}
+                                                        />
+                                                        <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        )}
+
                                     </div>
                                     <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 px-1">
                                         {msg.timestamp}

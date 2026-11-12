@@ -59,6 +59,8 @@ import type {
     UserInfo,
 } from "@/types/dashboard";
 
+import parseFileToChartData from "@/utils/chartParser";
+
 interface DashboardFormProps {
     initialData?: DashboardInitialData;
 }
@@ -542,6 +544,42 @@ export default function DashboardForm({
                     }
                     return Array.from(mergedMap.values());
                 });
+
+                // 업로드한 파일이 차트데이터(엑셀,CSV 등) 라면 즉시 파싱하여 채팅창에 챗봇의 메시지(그래프)로 추가
+                const targetFile = selected[0];
+                try {
+                    const chartData = await parseFileToChartData(targetFile);
+                    if (chartData && chartData.length > 0) {
+                        const currentId = activeChatId ?? `temp-${Date.now()}`;
+
+                        const chartMsg: Message = {
+                            id: `chart-${Date.now()}`,
+                            text: `업로드하신 파일(${targetFile.name})의 데이터를 분석하여 그래프로 시각화 했습니다.`,
+                            sender: "bot",
+                            timestamp: formatTime(new Date()),
+                        }
+
+                        setChatSessions((prev) => {
+                            const exists = prev.some((c) => c.id === currentId);
+                            if (!exists) {
+                                return [{
+                                    id: currentId,
+                                    title: targetFile.name,
+                                    messages: [chartMsg],
+                                    isLoaded: true,
+                                }, ...prev];
+                            }
+                            return prev.map((chat) => 
+                                chat.id == currentId
+                                    ? {...chat, messages: [...chat.messages, chartMsg]}
+                                    : chat
+                            )
+                        })
+                        if (!activeChatId) setActiveChatId(currentId);
+                    }
+                } catch (err) {
+                    console.log("이 파일은 차트로 변환할 수 없는 형식입니다.", err)
+                }
             }
             if (failed.length > 0) {
                 const serverDuplicateNames = failed
