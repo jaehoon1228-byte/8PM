@@ -650,7 +650,6 @@ export default function DashboardForm({
                 onSelectChat={handleSelectChat}
                 onDeleteChat={handleDeleteChat}
             />
-
             <ChatPanel
                 currentChat={currentChat}
                 companyName={userInfo?.companyName}
