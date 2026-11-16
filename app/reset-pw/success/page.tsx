@@ -13,7 +13,7 @@ export default async function ResetPasswordRequestSuccess({
     if (params && !Array.isArray(params) && params === "reset-success") {
         return (
             <>
-                <div className="flex w-full max-w-md flex-col items-center gap-6 rounded-3xl border border-slate-200/80 bg-white/95 p-8 text-center text-slate-900 shadow-2xl shadow-slate-900/10 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-900/95 dark:text-white sm:p-10">
+                <div className="flex w-full max-w-md flex-col items-center gap-6 rounded-3xl border border-slate-200/80 bg-white/95 p-8 text-center text-slate-900 shadow-2xl shadow-slate-900/10 transition-colors dark:border-slate-800 dark:bg-slate-900/95 dark:text-white sm:p-10">
                     <h1 className="text-2xl font-extrabold tracking-tight">
                         비밀번호 재설정
                     </h1>
@@ -35,7 +35,7 @@ export default async function ResetPasswordRequestSuccess({
     // 그 외의 경우 요청 완료 페이지 반환
     return (
         <>
-            <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-8 text-slate-900 shadow-2xl shadow-slate-900/10 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-900/95 dark:text-white sm:p-10">
+            <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-8 text-slate-900 shadow-2xl shadow-slate-900/10 transition-colors dark:border-slate-800 dark:bg-slate-900/95 dark:text-white sm:p-10">
                 <h1 className="mb-6 text-2xl font-extrabold tracking-tight">
                     비밀번호 재설정
                 </h1>

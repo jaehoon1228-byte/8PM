@@ -997,7 +997,7 @@ export default function AdminDashboard({
             />
 
             {/* 상단 네비게이션 헤더 */}
-            <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+            <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <button

@@ -82,7 +82,7 @@ export default function ChatPanel({
     };
 
     return (
-        <main className="flex-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors">
+        <main className="flex-1 bg-white/90 dark:bg-slate-900/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors">
             {!currentChat ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
                     {/* <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-2">

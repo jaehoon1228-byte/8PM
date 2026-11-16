@@ -23,7 +23,7 @@ export default function ChatSidebar({
     onDeleteChat,
 }: ChatSidebarProps) {
     return (
-        <aside className="w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl p-5 flex flex-col shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 shrink-0 transition-colors">
+        <aside className="w-72 bg-white/90 dark:bg-slate-900/90 rounded-3xl p-5 flex flex-col shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 shrink-0 transition-colors">
             <div className="px-2 mb-5">
                 <p className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                     MES AI Assistant

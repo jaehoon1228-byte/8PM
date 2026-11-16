@@ -77,7 +77,7 @@ export default function RegisterForm() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-4 transition-colors">
-            <div className="w-full max-w-md rounded-3xl bg-white/95 dark:bg-slate-900/95 p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
+            <div className="w-full max-w-md rounded-3xl bg-white/95 dark:bg-slate-900/95 p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800">
                 <div className="flex flex-col items-center text-center mb-7">
                     <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-3">
                         <UserPlus className="w-6 h-6" />

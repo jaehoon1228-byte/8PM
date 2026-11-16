@@ -22,7 +22,7 @@ export default function ProfileCard({
     return (
         <aside
             onClick={onOpenSettings}
-            className="w-full bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-900 backdrop-blur-xl transition-all rounded-3xl p-5 shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 flex justify-between items-center text-left cursor-pointer group"
+            className="w-full bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-900 transition-all rounded-3xl p-5 shadow-lg shadow-slate-900/5 border border-slate-200/80 dark:border-slate-800 flex justify-between items-center text-left cursor-pointer group"
             title="계정 정보 및 환경 설정 열기"
         >
             <div className="min-w-0 pr-2">

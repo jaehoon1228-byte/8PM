@@ -81,7 +81,7 @@ export default function PasswordResetForm({ token }: { token: string }) {
     };
 
     return (
-        <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-900/95 sm:p-10">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-colors dark:border-slate-800 dark:bg-slate-900/95 sm:p-10">
             <div className="mb-8 flex flex-col items-center text-center">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-tr from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25">
                     <KeyRound className="h-6 w-6" />

@@ -22,7 +22,7 @@ export default function LoginForm() {
     const [companycode, setCompanycode] = useState<string>("");
     const [loginFailed, setLoginFailed] = useState(false);
 
-        const handleSubmit = async () => {
+    const handleSubmit = async () => {
         type LoginResponse = {
             message?: string;
             refreshToken?: string;
@@ -63,7 +63,7 @@ export default function LoginForm() {
             }
             const loginResponse = await loginRequest
                 .json<LoginResponse>()
-                .catch(() => ({} as LoginResponse));
+                .catch(() => ({}) as LoginResponse);
             if (loginResponse.refreshToken) {
                 await setRefreshToken(loginResponse.refreshToken);
             }
@@ -75,7 +75,7 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 transition-colors">
+        <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 transition-colors">
             <div className="flex flex-col items-center text-center mb-8">
                 {/* <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                     MES AI ChatBot Web

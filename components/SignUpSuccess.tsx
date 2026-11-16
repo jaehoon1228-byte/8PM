@@ -19,7 +19,7 @@ export default function SignUpSuccess({ onConfirm }: SignUpSuccessProps) {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-4 transition-colors">
-            <div className="relative flex w-full max-w-md flex-col items-center text-center rounded-3xl bg-white/95 dark:bg-slate-900/95 p-10 text-slate-900 dark:text-white shadow-2xl border border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
+            <div className="relative flex w-full max-w-md flex-col items-center text-center rounded-3xl bg-white/95 dark:bg-slate-900/95 p-10 text-slate-900 dark:text-white shadow-2xl border border-slate-200/80 dark:border-slate-800">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-5">
                     <CheckCircle2 className="w-9 h-9" />
                 </div>

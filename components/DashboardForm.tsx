@@ -36,11 +36,7 @@ import {
     setStoredPersonalFiles,
     uploadFiles,
 } from "@/utils/dashboardApi";
-import {
-    formatTime,
-    reviveUploadedFile,
-    toUserInfo,
-} from "@/utils/endpoints";
+import { formatTime, reviveUploadedFile, toUserInfo } from "@/utils/endpoints";
 import {
     getStoredChatSessions,
     setStoredChatSessions,
@@ -550,10 +546,7 @@ export default function DashboardForm({
                 if (serverDuplicateNames.length > 0) {
                     setDuplicateFileModal((prev) =>
                         Array.from(
-                            new Set([
-                                ...(prev ?? []),
-                                ...serverDuplicateNames,
-                            ]),
+                            new Set([...(prev ?? []), ...serverDuplicateNames]),
                         ),
                     );
                 }
@@ -614,7 +607,7 @@ export default function DashboardForm({
 
             {/* 2-3. 푸시 알림 토스트 배너 (다른 작업 중 답변 완료 시 표시) */}
             {replyBanner && (
-                <div className="fixed top-6 right-6 z-50 max-w-sm bg-slate-900 dark:bg-indigo-950 text-white rounded-2xl p-4 shadow-2xl border border-indigo-500/30 flex items-start gap-3 animate-bounce">
+                <div className="fixed top-6 right-6 z-50 max-w-sm bg-slate-900 dark:bg-indigo-950 text-white rounded-2xl p-4 shadow-2xl border border-indigo-500/30 flex items-start gap-3">
                     <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0">
                         <BellRing className="w-4 h-4" />
                     </div>
@@ -705,8 +698,8 @@ export default function DashboardForm({
                         </h3>
 
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                            동일한 이름의 파일이 이미 업로드되어 있어 중복 파일은
-                            업로드되지 않았습니다.
+                            동일한 이름의 파일이 이미 업로드되어 있어 중복
+                            파일은 업로드되지 않았습니다.
                         </p>
 
                         <div className="mt-3 max-h-28 overflow-y-auto rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-left space-y-1">

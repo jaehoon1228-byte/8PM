@@ -71,7 +71,7 @@ export default function PasswordResetForm() {
     };
 
     return (
-        <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 transition-colors">
+        <div className="w-full max-w-md bg-white/95 dark:bg-slate-900/95 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-slate-900/10 border border-slate-200/80 dark:border-slate-800 transition-colors">
             <div className="flex flex-col items-center text-center mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 mb-4">
                     <KeyRound className="w-6 h-6" />
