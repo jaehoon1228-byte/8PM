@@ -61,6 +61,9 @@ export async function extractErrorMessage(
             // 기본 메시지 사용
         }
     }
+    if (!isHTTPError(error) && error instanceof Error && error.message) {
+        return error.message;
+    }
     return fallback;
 }
 
@@ -240,16 +243,18 @@ export async function uploadSingleFile(
         searchParams.targetCompanyId = String(targetCompanyId);
     }
 
-    const response = await api
+    const rawResponse = await api
         .post(ENDPOINTS.uploadFile, {
             searchParams,
             body: formData,
             timeout: 180_000,
         })
-        .json<FileUploadResponseDto>();
+        .json<FileUploadResponseDto | FileUploadResponseDto[]>();
 
-    if (!response.fileData) {
-        throw new Error(response.message || "파일 업로드에 실패했습니다.");
+    const response = Array.isArray(rawResponse) ? rawResponse[0] : rawResponse;
+
+    if (!response?.fileData) {
+        throw new Error(response?.message || "파일 업로드에 실패했습니다.");
     }
     const converted = toUploadedFile(response.fileData, file.size);
     return {
