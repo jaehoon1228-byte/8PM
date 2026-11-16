@@ -151,11 +151,11 @@ export function formatRoleLabel(role: string | undefined): string {
 
 /**
  * 계정 생성일자를 `YYYY년 MM월 DD일` 형식으로 변환합니다.
- * @param date 생성일자 (없으면 고정 기본 날짜를 반환)
+ * @param date 생성일자 (없으면 `-` 반환)
  * @returns 한국어 형식의 날짜 문자열
  */
 export function formatCreatedDate(date?: Temporal.PlainDateTime): string {
-    if (!date) return "2026년 06월 09일";
+    if (!date) return "-";
     return date.toLocaleString("ko-KR", {
         year: "numeric",
         month: "long",
@@ -175,14 +175,13 @@ export function recordLoginTimestamp(): void {
 
 /**
  * 마지막 로그인 시각을 한국어 로케일(ko-KR) 날짜/시각 문자열로 조회합니다 (월, 일, 시, 분 표시).
- * 저장된 값이 없으면 현재 시각을 사용하며, 서버 환경에서는 `-` 를 반환합니다.
+ * 저장된 값이 없거나 서버 환경이면 `-` 를 반환합니다.
  * @returns 포맷된 마지막 로그인 시각 문자열
  */
 export function getLastLoginTimestamp(): string {
     if (typeof window === "undefined") return "-";
-    const lastLoginAt =
-        usePreferenceStore.getState().lastLoginAt ??
-        Temporal.Now.plainDateTimeISO();
+    const lastLoginAt = usePreferenceStore.getState().lastLoginAt;
+    if (!lastLoginAt) return "-";
     return lastLoginAt.toLocaleString("ko-KR", {
         year: "numeric",
         month: "2-digit",

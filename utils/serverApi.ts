@@ -21,6 +21,7 @@ import {
     toChatSession,
     toUploadedFile,
 } from "@/utils/endpoints";
+import { isManagerOrAbove } from "@/utils/role";
 
 // 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소 사용)
 const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST ?? BACKEND_BASE_URL;
@@ -187,12 +188,26 @@ export async function getAdminInitialData(): Promise<AdminSSRResult> {
     if (auth.status === "expired") return { status: "expired" };
 
     const { client } = auth;
-    const [userInfo, allUsers, allFiles] = await Promise.all([
-        safe("관리자 정보", () =>
-            client
-                .get(ENDPOINTS.me)
-                .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
-        ),
+    const userInfo = await safe("관리자 정보", () =>
+        client
+            .get(ENDPOINTS.me)
+            .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
+    );
+
+    // 일반 사원은 관리자 전용 API를 불필요하게 호출하지 않도록 사전 차단
+    if (!userInfo || !isManagerOrAbove(userInfo.role)) {
+        return {
+            status: "ok",
+            data: {
+                userInfo,
+                companyUsers: null,
+                sharedFiles: null,
+                userFilesMap: null,
+            },
+        };
+    }
+
+    const [allUsers, allFiles] = await Promise.all([
         safe(
             "사원 목록",
             () =>

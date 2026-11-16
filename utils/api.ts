@@ -1,9 +1,9 @@
 import ky, { KyRequest } from "ky";
+import { BACKEND_BASE_URL, ENDPOINTS } from "@/utils/endpoints";
 import { nowMs } from "@/utils/time";
 
 /** 백엔드 API 기본 주소 (환경변수 NEXT_PUBLIC_BACKEND_HOST, 없으면 localhost:8080) */
-export const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_HOST ?? "http://localhost:8080";
+export const baseUrl = BACKEND_BASE_URL;
 
 // [보안 & 성능 최적화]
 //  1) XSS 방어: Access Token 을 localStorage 가 아닌 클로저 메모리 변수에만 보관
@@ -59,17 +59,18 @@ async function fetchOrReuseAccessToken(
     inflightRefreshPromise = (async () => {
         try {
             const accessTokenResponse = await ky.post(
-                baseUrl + "/api/v1/jwt/refresh",
+                baseUrl + ENDPOINTS.refresh,
                 {
                     credentials: "include",
+                    throwHttpErrors: false,
+                    timeout: 5000,
                 },
             );
             if (accessTokenResponse.ok) {
                 const token = accessTokenResponse.headers.get("Authorization");
                 if (token) {
-                    cachedAccessToken = token;
-                    cachedTokenExpiresAt = nowMs() + ACCESS_TOKEN_TTL_MS;
-                    return token;
+                    setCachedAccessToken(token);
+                    return cachedAccessToken;
                 }
             }
             return null;
@@ -111,8 +112,7 @@ export const api = ky.extend({
         // 3. 응답(Response) 인터셉터: 401 수신 시 메모리 캐시를 무효화하고 강제 재발급 후 1회 재시도
         afterResponse: [
             async ({ request, response, retryCount }) => {
-                if (response.status === 401 && retryCount <= 0) {
-                    ++retryCount;
+                if (response.status === 401 && retryCount === 0) {
                     clearCachedAccessToken();
                     await getAccessToken(request, true);
                     return ky.retry({ request });
