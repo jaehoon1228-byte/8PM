@@ -3,3 +3,5 @@ build
 coverage
 .next
 .agents/skills/design-md/**
+package-lock.json
+pnpm-lock.json
