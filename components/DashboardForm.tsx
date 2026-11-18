@@ -58,8 +58,7 @@ import type {
     UploadedFile,
     UserInfo,
 } from "@/types/dashboard";
-
-import parseFileToChartData from "@/utils/chartParser";
+import { title } from "node:process";
 
 interface DashboardFormProps {
     initialData?: DashboardInitialData;
@@ -545,18 +544,17 @@ export default function DashboardForm({
                     return Array.from(mergedMap.values());
                 });
 
-                // 업로드한 파일이 차트데이터(엑셀,CSV 등) 라면 즉시 파싱하여 채팅창에 챗봇의 메시지(그래프)로 추가
-                const targetFile = selected[0];
-                try {
-                    const chartData = await parseFileToChartData(targetFile);
-                    if (chartData && chartData.length > 0) {
-                        const currentId = activeChatId ?? `temp-${Date.now()}`;
-
+                // 백앤드에서 파싱해 전달된 차트데이터가 있는 경우 채팅창에 그래프 메시지 추가
+                for(const item of uploaded) {
+                    const fileChartData = (item as UploadedFile & {chartData?: {label: string, value: number} []}).chartData;
+                    if (fileChartData && fileChartData.length > 0) {
+                        const currentId = activeChatId ?? `temp-${nowMs()}`;
                         const chartMsg: Message = {
-                            id: `chart-${Date.now()}`,
-                            text: `업로드하신 파일(${targetFile.name})의 데이터를 분석하여 그래프로 시각화 했습니다.`,
+                            id: `chart-${nowMs()}`,
+                            text: `업로드하신 파일(${item.name})의 데이터를 분석하여 시각화했습니다.`,
                             sender: "bot",
-                            timestamp: formatTime(new Date()),
+                            timestamp: formatTime(),
+                            chartData: fileChartData
                         }
 
                         setChatSessions((prev) => {
@@ -564,23 +562,22 @@ export default function DashboardForm({
                             if (!exists) {
                                 return [{
                                     id: currentId,
-                                    title: targetFile.name,
+                                    title: item.name,
                                     messages: [chartMsg],
                                     isLoaded: true,
                                 }, ...prev];
                             }
-                            return prev.map((chat) => 
-                                chat.id == currentId
+                            return prev.map((chat) => {
+                                return chat.id === currentId
                                     ? {...chat, messages: [...chat.messages, chartMsg]}
                                     : chat
-                            )
+                            })
                         })
                         if (!activeChatId) setActiveChatId(currentId);
                     }
-                } catch (err) {
-                    console.log("이 파일은 차트로 변환할 수 없는 형식입니다.", err)
                 }
             }
+            
             if (failed.length > 0) {
                 const serverDuplicateNames = failed
                     .filter((f) => f.reason.includes("이미 업로드한 파일"))

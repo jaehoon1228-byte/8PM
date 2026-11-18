@@ -15,6 +15,16 @@ export interface Message {
     sender: "user" | "bot";
     /** 표시용 시각 (HH:mm) */
     timestamp: string;
+    /** 시각화용 차트데이터 */
+    chartData?: ChartDataPoint[];
+}
+
+/** 차트 데이터 항목 타입 */
+export interface ChartDataPoint {
+    /** 차트 항목 이름 */
+    label: string;
+    /** 차트 항목 수치 데이터 */
+    value: number;
 }
 
 /** 화면에 표시되는 각 대화방 */
