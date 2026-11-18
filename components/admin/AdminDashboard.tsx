@@ -1472,7 +1472,7 @@ export default function AdminDashboard({
                                                     member.employeeId,
                                                 )
                                             }
-                                            className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 hover:bg-gray-100 transition-colors cursor-pointer"
+                                            className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:bg-gray-100 transition-colors cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3.5 min-w-0">
                                                 {isExpanded ? (
