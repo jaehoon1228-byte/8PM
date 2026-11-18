@@ -191,7 +191,7 @@ export default function ChatPanel({
                 >
                     <Paperclip className="w-5 h-5" />
                 </button>
-                <div className="relative flex-1 flex items-center">
+                <div className="flex-1 min-w-0 flex items-end bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl border border-slate-200/90 dark:border-slate-700 has-[textarea:focus]:border-indigo-500 dark:has-[textarea:focus]:border-indigo-400 has-[textarea:focus]:bg-white dark:has-[textarea:focus]:bg-slate-800 has-[textarea:focus]:ring-3 has-[textarea:focus]:ring-indigo-500/15 transition-all">
                     <textarea
                         ref={textareaRef}
                         rows={1}
@@ -199,12 +199,12 @@ export default function ChatPanel({
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="무엇이든 물어보세요..."
-                        className="w-full bg-slate-100/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-2xl py-3.5 pl-5 pr-13 text-sm font-medium outline-none border border-slate-200/90 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 transition-all resize-none overflow-y-auto max-h-40 custom-scrollbar"
+                        className="flex-1 min-w-0 bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 py-3.5 pl-5 pr-2 text-sm font-medium outline-none resize-none overflow-y-auto max-h-40 custom-scrollbar"
                     />
                     <button
                         type="submit"
                         disabled={isSending || !input.trim()}
-                        className="absolute right-2.5 bottom-2 p-2 bg-indigo-600 hover:bg-indigo-500 text-white transition-all rounded-xl cursor-pointer flex items-center justify-center disabled:opacity-35 disabled:cursor-not-allowed shadow-sm"
+                        className="shrink-0 mb-2 mr-2.5 ml-1.5 p-2 bg-indigo-600 hover:bg-indigo-500 text-white transition-all rounded-xl cursor-pointer flex items-center justify-center disabled:opacity-35 disabled:cursor-not-allowed shadow-sm"
                         title="질문 전송"
                     >
                         <Send className="w-4 h-4" />
