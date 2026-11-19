@@ -48,7 +48,7 @@ export const usePreferenceStore = create<PreferenceState>()(
     persist(
         (set) => ({
             theme: ThemeMode.Light,
-            notifications: true,
+            notifications: false,
             lastLoginAt: null,
             setTheme: (theme) => set({ theme }),
             setNotifications: (enabled) => set({ notifications: enabled }),
