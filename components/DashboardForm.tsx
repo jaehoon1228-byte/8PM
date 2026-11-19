@@ -1,19 +1,23 @@
 "use client";
 
 // =====================================================================
-// 메인(대시보드) 화면 컨테이너
-//  - SSR 초기 데이터를 받아 채팅/파일/설정의 도메인 훅과 하위 UI 컴포넌트를 조합
-//  - 푸시 알림 ON 시: 다른 탭/작업 이동 또는 설정 창 열람 중에 AI 답변 도착 시 데스크톱 알림 & 인앱 토스트 표시
+// 메인(대시보드) 공통 3단 셸 컨테이너
+//  - 좌측 사이드바(채팅 목록 메타데이터) + 중앙 채팅 슬롯({children}) + 우측 프로필/파일 패널
+//  - 각 채팅방의 대화 내역은 경로(`/chat/[chatId]`)의 page.tsx가 단독 조회해 {children}에 렌더링
 // =====================================================================
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/dashboard/ChatSidebar";
-import ChatPanel from "@/components/dashboard/ChatPanel";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import FileListPanel from "@/components/dashboard/FileListPanel";
 import SettingsModal from "@/components/dashboard/SettingsModal";
 import ReplyToastBanner from "@/components/dashboard/ReplyToastBanner";
 import DuplicateFileModal from "@/components/dashboard/DuplicateFileModal";
+import {
+    DashboardShellProvider,
+    type DashboardShellContextValue,
+} from "@/components/dashboard/DashboardShellContext";
 import { useDashboardError } from "@/hooks/useDashboardError";
 import { useDashboardChat } from "@/hooks/useDashboardChat";
 import { useDashboardFiles } from "@/hooks/useDashboardFiles";
@@ -24,6 +28,7 @@ import type { DashboardInitialData, UserInfo } from "@/types/dashboard";
 
 interface DashboardFormProps {
     initialData?: DashboardInitialData;
+    children: React.ReactNode;
 }
 
 const EMPTY_INITIAL_DATA: DashboardInitialData = {
@@ -34,7 +39,9 @@ const EMPTY_INITIAL_DATA: DashboardInitialData = {
 
 export default function DashboardForm({
     initialData = EMPTY_INITIAL_DATA,
+    children,
 }: DashboardFormProps) {
+    const router = useRouter();
     const { handleApiError } = useDashboardError();
 
     // ---------------- 서버 데이터 (SSR 초기값) ----------------
@@ -81,22 +88,19 @@ export default function DashboardForm({
     const {
         chatSessions,
         activeChatId,
-        setActiveChatId,
-        sendingChatId,
-        loadingChatId,
-        resetKey,
+        newChatResetKey,
         replyBanner,
         setReplyBanner,
+        addSessionToSidebar,
+        getSessionTitle,
         handleNewChat,
         handleSelectChat,
         handleDeleteChat,
-        handleSend,
         clearChatState,
     } = useDashboardChat({
         initialSessions: initialData.chatSessions ?? [],
         shouldFetchSessions: initialData.chatSessions === null,
         employeeId: userInfo?.employeeId,
-        isSettingsOpenRef,
         handleApiError,
     });
 
@@ -117,7 +121,25 @@ export default function DashboardForm({
         handleApiError,
     });
 
-    const currentChat = chatSessions.find((chat) => chat.id === activeChatId);
+    const shellContextValue = useMemo<DashboardShellContextValue>(
+        () => ({
+            companyName: userInfo?.companyName,
+            newChatResetKey,
+            openFilePicker: handleOpenFilePicker,
+            addSessionToSidebar,
+            getSessionTitle,
+            isSettingsOpenRef,
+            handleApiError,
+        }),
+        [
+            userInfo?.companyName,
+            newChatResetKey,
+            handleOpenFilePicker,
+            addSessionToSidebar,
+            getSessionTitle,
+            handleApiError,
+        ],
+    );
 
     const handleClearLocalCache = () => {
         clearChatState();
@@ -125,73 +147,62 @@ export default function DashboardForm({
     };
 
     return (
-        <div className="flex h-screen w-full bg-linear-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-5 gap-5 relative overflow-hidden box-border transition-colors">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept=".pdf,.docx,.xlsx,.pptx,.csv"
-                className="hidden"
-                multiple
-            />
-
-            <ReplyToastBanner
-                banner={replyBanner}
-                onSelectSession={(sessionId) => {
-                    setIsSettingsOpen(false);
-                    setActiveChatId(sessionId);
-                    setReplyBanner(null);
-                }}
-                onDismiss={() => setReplyBanner(null)}
-            />
-
-            <ChatSidebar
-                chatSessions={chatSessions}
-                activeChatId={activeChatId}
-                onNewChat={handleNewChat}
-                onSelectChat={handleSelectChat}
-                onDeleteChat={handleDeleteChat}
-            />
-
-            <ChatPanel
-                currentChat={currentChat}
-                companyName={userInfo?.companyName}
-                isSending={sendingChatId !== null}
-                isWaitingReply={
-                    sendingChatId !== null && sendingChatId === activeChatId
-                }
-                isLoadingMessages={
-                    loadingChatId !== null && loadingChatId === activeChatId
-                }
-                resetKey={resetKey}
-                onSend={handleSend}
-                onOpenFilePicker={handleOpenFilePicker}
-            />
-
-            <div className="w-72 min-h-0 flex flex-col gap-5 shrink-0">
-                <ProfileCard
-                    userInfo={userInfo}
-                    onOpenSettings={() => setIsSettingsOpen(true)}
+        <DashboardShellProvider value={shellContextValue}>
+            <div className="flex h-screen w-full bg-linear-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16] p-5 gap-5 relative overflow-hidden box-border transition-colors">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".pdf,.docx,.xlsx,.pptx,.csv"
+                    className="hidden"
+                    multiple
                 />
 
-                <FileListPanel
-                    uploadedFiles={uploadedFiles}
-                    isUploading={isUploading}
-                    onRemoveFile={handleRemoveFile}
+                <ReplyToastBanner
+                    banner={replyBanner}
+                    onSelectSession={(sessionId) => {
+                        setIsSettingsOpen(false);
+                        setReplyBanner(null);
+                        router.push(`/chat/${encodeURIComponent(sessionId)}`);
+                    }}
+                    onDismiss={() => setReplyBanner(null)}
+                />
+
+                <ChatSidebar
+                    chatSessions={chatSessions}
+                    activeChatId={activeChatId}
+                    onNewChat={handleNewChat}
+                    onSelectChat={handleSelectChat}
+                    onDeleteChat={handleDeleteChat}
+                />
+
+                {children}
+
+                <div className="w-72 min-h-0 flex flex-col gap-5 shrink-0">
+                    <ProfileCard
+                        userInfo={userInfo}
+                        onOpenSettings={() => setIsSettingsOpen(true)}
+                    />
+
+                    <FileListPanel
+                        uploadedFiles={uploadedFiles}
+                        isUploading={isUploading}
+                        onRemoveFile={handleRemoveFile}
+                    />
+                </div>
+
+                <SettingsModal
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
+                    userInfo={userInfo}
+                    onClearLocalCache={handleClearLocalCache}
+                />
+
+                <DuplicateFileModal
+                    duplicateNames={duplicateFileModal}
+                    onClose={() => setDuplicateFileModal(null)}
                 />
             </div>
-
-            <SettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                userInfo={userInfo}
-                onClearLocalCache={handleClearLocalCache}
-            />
-
-            <DuplicateFileModal
-                duplicateNames={duplicateFileModal}
-                onClose={() => setDuplicateFileModal(null)}
-            />
-        </div>
+        </DashboardShellProvider>
     );
 }

@@ -1,3 +1,4 @@
+import { useChatRuntimeStore } from "@/utils/store/chatRuntimeStore";
 import { useChatSessionStore } from "@/utils/store/chatSessionStore";
 import { useFileStore } from "@/utils/store/fileStore";
 import { applyThemeClass } from "@/utils/preferences";
@@ -11,6 +12,7 @@ export function resetStores(): void {
     usePreferenceStore.setState(usePreferenceStore.getInitialState(), true);
     useFileStore.setState(useFileStore.getInitialState(), true);
     useChatSessionStore.setState(useChatSessionStore.getInitialState(), true);
+    useChatRuntimeStore.getState().resetRuntime();
 
     usePreferenceStore.persist.clearStorage();
     useFileStore.persist.clearStorage();

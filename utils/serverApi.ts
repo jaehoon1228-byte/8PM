@@ -9,9 +9,11 @@ import ky, { isHTTPError, type KyInstance } from "ky";
 import { cookies } from "next/headers";
 import type {
     AdminInitialData,
+    ChatHistoryDto,
     ChatSessionResponseDto,
     DashboardInitialData,
     FileMetadataDto,
+    Message,
     UserInfo,
 } from "@/types/dashboard";
 import {
@@ -19,6 +21,7 @@ import {
     ENDPOINTS,
     serializeUploadedFile,
     toChatSession,
+    toMessageFromHistory,
     toUploadedFile,
 } from "@/utils/endpoints";
 import { isManagerOrAbove } from "@/utils/role";
@@ -163,6 +166,76 @@ export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
             files: personalFiles.map(serializeUploadedFile),
         },
     };
+}
+
+/** 특정 채팅방 SSR 대화 내역 조회 결과 */
+export type ChatHistoriesSSRResult =
+    | { status: "expired" }
+    | { status: "not-found" }
+    | { status: "ok"; messages: Message[] };
+
+const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * 문자열이 표준 UUID 형식인지 검사합니다.
+ * @param value 검사할 문자열
+ * @returns UUID 형식이면 true
+ */
+export function isValidUuid(value: string): boolean {
+    return UUID_REGEX.test(value);
+}
+
+/**
+ * 경로의 특정 `chatId`에 해당하는 과거 대화 내역만 서버에서 단독 조회합니다 (SSR).
+ *  - GET /api/v1/chat/sessions/{chatId}/histories
+ *  - UUID 형식이 아니거나 백엔드가 400/403/404를 반환하면 `not-found`를 반환합니다.
+ * @param chatId URL 경로의 채팅방 UUID
+ * @returns 세션 만료(`expired`), 미존재/권한없음(`not-found`), 또는 조회된 메시지 목록(`ok`)
+ */
+export async function getChatRoomHistories(
+    chatId: string,
+): Promise<ChatHistoriesSSRResult> {
+    if (!isValidUuid(chatId)) {
+        return { status: "not-found" };
+    }
+
+    let auth: ServerAuth;
+    try {
+        auth = await createServerApi();
+    } catch (error) {
+        console.error("[SSR-Chat] 토큰 재발급 요청 실패:", error);
+        return { status: "expired" };
+    }
+
+    if (auth.status === "expired") return { status: "expired" };
+
+    try {
+        const dtos = await auth.client
+            .get(ENDPOINTS.chatHistories(chatId))
+            .json<ChatHistoryDto[]>();
+        return {
+            status: "ok",
+            messages: dtos.map(toMessageFromHistory),
+        };
+    } catch (error) {
+        if (isHTTPError(error)) {
+            const status = error.response.status;
+            if (status === 401) {
+                return { status: "expired" };
+            }
+            if (status === 400 || status === 403 || status === 404) {
+                return { status: "not-found" };
+            }
+            console.error(
+                `[SSR-Chat] 대화 내역 조회 실패 (${chatId}):`,
+                status,
+            );
+        } else {
+            console.error(`[SSR-Chat] 대화 내역 조회 실패 (${chatId}):`, error);
+        }
+        throw error;
+    }
 }
 
 /** 관리자 화면 SSR 조회 결과: 세션 만료(`expired`) 또는 초기 데이터(`ok`) */

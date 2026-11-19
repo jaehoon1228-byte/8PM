@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { nowMs } from "@/utils/time";
 
 // [Mock API] POST /api/v1/chat/sessionrooms
 // 백엔드 ChatSessionResponseDto 규격
 export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as { title?: string };
-    const sessionId = "mock-session-" + nowMs();
+    const sessionId = crypto.randomUUID();
     const title = body.title || "새 대화 세션";
 
     console.log("[Mock API] 새 세션 생성:", { sessionId, title });
