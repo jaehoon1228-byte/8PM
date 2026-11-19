@@ -245,7 +245,7 @@ export async function uploadSingleFile(
         .post(ENDPOINTS.uploadFile, {
             searchParams,
             body: formData,
-            timeout: 180_000,
+            timeout: 600_000,
         })
         .json<FileUploadResponseDto | FileUploadResponseDto[]>();
 
