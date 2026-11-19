@@ -251,7 +251,7 @@ export async function uploadSingleFile(
 
     const response = Array.isArray(rawResponse) ? rawResponse[0] : rawResponse;
 
-    
+
 
     if (!response?.fileData) {
         throw new Error(response?.message || "파일 업로드가 지연되고 있습니다.");
@@ -320,7 +320,7 @@ export async function uploadFiles(
  *  - USER 는 본인 파일만, MANAGER 는 MASTER 외 파일만 삭제 가능 (위반 시 403 + message 반환)
  */
 export async function deleteFile(fileId: string): Promise<FileDeleteResponseDto> {
-    return api.delete(ENDPOINTS.deleteFile(fileId)).json<FileDeleteResponseDto>();
+    return api.delete(ENDPOINTS.deleteFile(fileId), {timeout: 600_000}).json<FileDeleteResponseDto>();
 }
 
 // =====================================================================
