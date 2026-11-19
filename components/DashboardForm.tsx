@@ -546,7 +546,7 @@ export default function DashboardForm({
 
                 // 백앤드에서 파싱해 전달된 차트데이터가 있는 경우 채팅창에 그래프 메시지 추가
                 for(const item of uploaded) {
-                    const fileChartData = (item as UploadedFile & {chartData?: {label: string, value: number} []}).chartData;
+                    const fileChartData = (item as UploadedFile & {chartData?: {x: string, y: number} []}).chartData;
                     if (fileChartData && fileChartData.length > 0) {
                         const currentId = activeChatId ?? `temp-${nowMs()}`;
                         const chartMsg: Message = {

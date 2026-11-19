@@ -22,9 +22,9 @@ export interface Message {
 /** 차트 데이터 항목 타입 */
 export interface ChartDataPoint {
     /** 차트 항목 이름 */
-    label: string;
+    x: string;
     /** 차트 항목 수치 데이터 */
-    value: number;
+    y: number;
 }
 
 /** 화면에 표시되는 각 대화방 */
