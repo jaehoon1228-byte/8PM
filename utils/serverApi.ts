@@ -21,27 +21,24 @@ import {
     toChatSession,
     toUploadedFile,
 } from "@/utils/endpoints";
+import { isManagerOrAbove } from "@/utils/role";
 
 // 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소 사용)
 const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST ?? BACKEND_BASE_URL;
 
-/** SSR 인증 결과: 쿠키 없음 / 세션 만료 / 성공 */
-type ServerAuth =
-    | { status: "no-cookie" }
-    | { status: "expired" }
-    | { status: "ok"; client: KyInstance };
+/** SSR 인증 결과: 미인증·세션 만료 / 성공 */
+type ServerAuth = { status: "expired" } | { status: "ok"; client: KyInstance };
 
 /**
  * HttpOnly 쿠키의 refreshToken으로 Access Token 을 발급받아 SSR용 ky 클라이언트를 생성합니다.
- * 쿠키가 없으면 CSR로 위임하고, 401/403이면 세션 만료로 판단합니다.
- * @returns 쿠키 없음(`no-cookie`), 세션 만료(`expired`), 또는 인증된 클라이언트(`ok`)
+ * 쿠키가 없거나 재발급에 실패하면 `expired`를 반환해 페이지 단에서 `/login`으로 리다이렉트합니다.
+ * @returns 미인증/세션 만료(`expired`) 또는 인증된 클라이언트(`ok`)
  */
 async function createServerApi(): Promise<ServerAuth> {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get("refreshToken")?.value;
 
-    // 로컬 개발 환경 등 쿠키 도메인이 달라 서버가 쿠키를 받지 못한 경우 → CSR 로 위임
-    if (!refreshToken) return { status: "no-cookie" };
+    if (!refreshToken) return { status: "expired" };
 
     // JWTController: @PostMapping("/api/v1/jwt/refresh") @CookieValue("refreshToken")
     const refreshResponse = await ky.post(serverBaseUrl + ENDPOINTS.refresh, {
@@ -53,9 +50,7 @@ async function createServerApi(): Promise<ServerAuth> {
 
     const accessToken = refreshResponse.headers.get("Authorization");
     if (!refreshResponse.ok || !accessToken) {
-        return refreshResponse.status === 401 || refreshResponse.status === 403
-            ? { status: "expired" }
-            : { status: "no-cookie" }; // 백엔드 일시 장애 등 → CSR 재시도
+        return { status: "expired" };
     }
 
     const client = ky.create({
@@ -114,22 +109,15 @@ export type DashboardSSRResult =
  * @returns 세션 만료 시 `expired`, 그 외에는 조회된 사용자/대화방/개인 파일 초기 데이터
  */
 export async function getDashboardInitialData(): Promise<DashboardSSRResult> {
-    const empty: DashboardInitialData = {
-        userInfo: null,
-        chatSessions: null,
-        files: null,
-    };
-
     let auth: ServerAuth;
     try {
         auth = await createServerApi();
     } catch (error) {
         console.error("[SSR] 토큰 재발급 요청 실패:", error);
-        return { status: "ok", data: empty };
+        return { status: "expired" };
     }
 
     if (auth.status === "expired") return { status: "expired" };
-    if (auth.status === "no-cookie") return { status: "ok", data: empty };
 
     const { client } = auth;
     const [userInfo, chatSessions, files] = await Promise.all([
@@ -189,31 +177,37 @@ export type AdminSSRResult =
  * @returns 세션 만료 시 `expired`, 그 외에는 관리자/사원/파일 초기 데이터
  */
 export async function getAdminInitialData(): Promise<AdminSSRResult> {
-    const empty: AdminInitialData = {
-        userInfo: null,
-        companyUsers: null,
-        sharedFiles: null,
-        userFilesMap: null,
-    };
-
     let auth: ServerAuth;
     try {
         auth = await createServerApi();
     } catch (error) {
         console.error("[SSR-Admin] 토큰 재발급 요청 실패:", error);
-        return { status: "ok", data: empty };
+        return { status: "expired" };
     }
 
     if (auth.status === "expired") return { status: "expired" };
-    if (auth.status === "no-cookie") return { status: "ok", data: empty };
 
     const { client } = auth;
-    const [userInfo, allUsers, allFiles] = await Promise.all([
-        safe("관리자 정보", () =>
-            client
-                .get(ENDPOINTS.me)
-                .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
-        ),
+    const userInfo = await safe("관리자 정보", () =>
+        client
+            .get(ENDPOINTS.me)
+            .json<Omit<UserInfo, "createdAt"> & { createdAt?: string }>(),
+    );
+
+    // 일반 사원은 관리자 전용 API를 불필요하게 호출하지 않도록 사전 차단
+    if (!userInfo || !isManagerOrAbove(userInfo.role)) {
+        return {
+            status: "ok",
+            data: {
+                userInfo,
+                companyUsers: null,
+                sharedFiles: null,
+                userFilesMap: null,
+            },
+        };
+    }
+
+    const [allUsers, allFiles] = await Promise.all([
         safe(
             "사원 목록",
             () =>

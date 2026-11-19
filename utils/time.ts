@@ -3,6 +3,15 @@
 //  - 타임존은 저장하지 않음. 백엔드 LocalDateTime 값을 PlainDateTime 으로 다룸
 //  - 오프셋이 포함된 문자열(mock API 의 UTC 값 등)은 로컬 벽시계 시각으로 변환
 // =====================================================================
+import { Temporal as TemporalPolyfill } from "@js-temporal/polyfill";
+
+if (typeof globalThis.Temporal === "undefined") {
+    Object.defineProperty(globalThis, "Temporal", {
+        value: TemporalPolyfill,
+        configurable: true,
+        writable: true,
+    });
+}
 
 /**
  * 현재 시각을 반환합니다.

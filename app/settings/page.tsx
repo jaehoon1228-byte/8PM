@@ -1,30 +1,19 @@
-"use client";
+import { redirect } from "next/navigation";
+import SettingsPageClient from "@/components/dashboard/SettingsPageClient";
+import { toUserInfo } from "@/utils/endpoints";
+import { getDashboardInitialData } from "@/utils/serverApi";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import SettingsModal from "@/components/dashboard/SettingsModal";
-import { fetchMyInfo } from "@/utils/dashboardApi";
-import type { UserInfo } from "@/types/dashboard";
+/**
+ * 설정 페이지 라우트 컴포넌트입니다 (Server Component).
+ * 세션을 검증해 비로그인/만료 사용자는 `/login`으로 리다이렉트하고,
+ * 인증된 사용자 정보를 클라이언트 설정 래퍼로 전달합니다.
+ */
+export default async function SettingsPage() {
+    const result = await getDashboardInitialData();
 
-export default function SettingsPage() {
-    const router = useRouter();
-    const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined);
+    if (result.status === "expired" || !result.data.userInfo) {
+        redirect("/login");
+    }
 
-    useEffect(() => {
-        fetchMyInfo()
-            .then(setUserInfo)
-            .catch(() => {
-                // 비로그인 시 무시
-            });
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-linear-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16]">
-            <SettingsModal
-                isOpen
-                onClose={() => router.push("/")}
-                userInfo={userInfo}
-            />
-        </div>
-    );
+    return <SettingsPageClient userInfo={toUserInfo(result.data.userInfo)} />;
 }

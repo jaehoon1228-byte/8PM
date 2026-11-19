@@ -31,6 +31,7 @@ import {
     toUserInfo,
 } from "@/utils/endpoints";
 import { useFileStore } from "@/utils/store/fileStore";
+import { removeStoredChatSessions } from "@/utils/store/chatSessionStore";
 
 /** 인터셉터의 재발급까지 실패한 경우(=세션 완전 만료)인지 판별 */
 export function isSessionExpired(error: unknown): boolean {
@@ -60,6 +61,9 @@ export async function extractErrorMessage(
         } catch {
             // 기본 메시지 사용
         }
+    }
+    if (!isHTTPError(error) && error instanceof Error && error.message) {
+        return error.message;
     }
     return fallback;
 }
@@ -196,11 +200,9 @@ export function removeStoredPersonalFiles(employeeId: number): void {
  */
 export async function fetchPersonalFiles(
     employeeId: number,
-    companyId: number,
+    _companyId?: number,
 ): Promise<UploadedFile[]> {
-    const sharedIds = new Set(
-        getStoredSharedFiles(companyId).map((f) => f.id),
-    );
+    void _companyId;
     const response = await api
         .get(ENDPOINTS.files)
         .json<FileMetadataDto[]>();
@@ -210,7 +212,6 @@ export async function fetchPersonalFiles(
         .filter(
             (file) =>
                 !file.shared &&
-                !sharedIds.has(file.id) &&
                 (file.employeeId === undefined ||
                     file.employeeId === employeeId),
         );
@@ -240,16 +241,18 @@ export async function uploadSingleFile(
         searchParams.targetCompanyId = String(targetCompanyId);
     }
 
-    const response = await api
+    const rawResponse = await api
         .post(ENDPOINTS.uploadFile, {
             searchParams,
             body: formData,
             timeout: 180_000,
         })
-        .json<FileUploadResponseDto>();
+        .json<FileUploadResponseDto | FileUploadResponseDto[]>();
 
-    if (!response.fileData) {
-        throw new Error(response.message || "파일 업로드에 실패했습니다.");
+    const response = Array.isArray(rawResponse) ? rawResponse[0] : rawResponse;
+
+    if (!response?.fileData) {
+        throw new Error(response?.message || "파일 업로드에 실패했습니다.");
     }
     const converted = toUploadedFile(response.fileData, file.size);
     return {
@@ -260,8 +263,10 @@ export async function uploadSingleFile(
     };
 }
 
+const MAX_UPLOAD_CONCURRENCY = 2;
+
 /**
- * 여러 파일을 순차적으로 업로드합니다. 파일 하나가 실패해도 나머지는 계속 업로드합니다.
+ * 여러 파일을 동시성 제한(최대 2개)으로 병렬 업로드합니다. 파일 하나가 실패해도 나머지는 계속 업로드합니다.
  * @param files 업로드할 파일 목록
  * @param shared true 이면 회사 공용 파일로, false 이면 개인 파일로 업로드합니다
  * @param targetEmployeeId 개인 파일을 올릴 대상 사원 ID (관리자가 사원 대신 업로드할 때)
@@ -279,25 +284,32 @@ export async function uploadFiles(
 }> {
     const uploaded: UploadedFile[] = [];
     const failed: { name: string; reason: string }[] = [];
+    let nextIndex = 0;
 
-    for (const file of files) {
-        try {
-            const item = await uploadSingleFile(
-                file,
-                shared,
-                targetEmployeeId,
-                targetCompanyId,
-            );
-            uploaded.push(item);
-        } catch (error) {
-            if (isSessionExpired(error)) throw error;
-            const reason = await extractErrorMessage(
-                error,
-                "파일 형식이 올바르지 않거나 업로드에 실패했습니다.",
-            );
-            failed.push({ name: file.name, reason });
+    async function worker(): Promise<void> {
+        while (nextIndex < files.length) {
+            const file = files[nextIndex++];
+            try {
+                const item = await uploadSingleFile(
+                    file,
+                    shared,
+                    targetEmployeeId,
+                    targetCompanyId,
+                );
+                uploaded.push(item);
+            } catch (error) {
+                if (isSessionExpired(error)) throw error;
+                const reason = await extractErrorMessage(
+                    error,
+                    "파일 형식이 올바르지 않거나 업로드에 실패했습니다.",
+                );
+                failed.push({ name: file.name, reason });
+            }
         }
     }
+
+    const workerCount = Math.min(MAX_UPLOAD_CONCURRENCY, files.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
     return { uploaded, failed };
 }
 
@@ -330,6 +342,7 @@ export async function createAdminUser(dto: JoinRequestDto): Promise<string> {
 export async function deleteAdminUser(targetEmployeeId: number): Promise<string> {
     const res = await api.delete(ENDPOINTS.deleteUser(targetEmployeeId)).text();
     removeStoredPersonalFiles(targetEmployeeId);
+    removeStoredChatSessions(targetEmployeeId);
     return res;
 }
 
@@ -359,18 +372,11 @@ export async function fetchCompanySharedFiles(
             )
             .map((f) => ({ ...f, shared: true, companyId }));
 
-        const mergedMap = new Map<string, UploadedFile>();
-        for (const item of fromApi) {
-            mergedMap.set(item.id, item);
-        }
-        for (const item of stored) {
-            if (!mergedMap.has(item.id)) {
-                mergedMap.set(item.id, item);
-            }
-        }
-        const merged = Array.from(mergedMap.values());
-        setStoredSharedFiles(companyId, merged);
-        return merged;
+        const deduped = Array.from(
+            new Map(fromApi.map((item) => [item.id, item])).values(),
+        );
+        setStoredSharedFiles(companyId, deduped);
+        return deduped;
     } catch {
         return stored;
     }
@@ -408,18 +414,11 @@ export async function fetchUserPersonalFilesForAdmin(
                     (f.employeeId === undefined || f.employeeId === employeeId),
             );
 
-        const mergedMap = new Map<string, UploadedFile>();
-        for (const item of fromApi) {
-            mergedMap.set(item.id, item);
-        }
-        for (const item of stored) {
-            if (!mergedMap.has(item.id)) {
-                mergedMap.set(item.id, item);
-            }
-        }
-        const merged = Array.from(mergedMap.values());
-        setStoredPersonalFiles(employeeId, merged);
-        return merged;
+        const deduped = Array.from(
+            new Map(fromApi.map((item) => [item.id, item])).values(),
+        );
+        setStoredPersonalFiles(employeeId, deduped);
+        return deduped;
     } catch {
         return stored;
     }
@@ -470,14 +469,9 @@ export async function fetchAllCompanyFilesByEmployeeMap(
 
         for (const empId of employeeIds) {
             const empMap = grouped.get(empId) ?? new Map<string, UploadedFile>();
-            for (const localItem of resultMap[empId] ?? []) {
-                if (!empMap.has(localItem.id)) {
-                    empMap.set(localItem.id, localItem);
-                }
-            }
-            const merged = Array.from(empMap.values());
-            resultMap[empId] = merged;
-            setStoredPersonalFiles(empId, merged);
+            const latest = Array.from(empMap.values());
+            resultMap[empId] = latest;
+            setStoredPersonalFiles(empId, latest);
         }
 
         return resultMap;

@@ -289,28 +289,6 @@ function createInitialMockDatabase(): MockDatabase {
 export function getMockDb(): MockDatabase {
     if (!globalThis.__mesMockDb) {
         globalThis.__mesMockDb = createInitialMockDatabase();
-    } else {
-        const seed = createInitialMockDatabase();
-        for (const u of seed.users) {
-            if (
-                !globalThis.__mesMockDb.users.some(
-                    (existing) =>
-                        existing.companyId === u.companyId &&
-                        existing.employeeId === u.employeeId,
-                )
-            ) {
-                globalThis.__mesMockDb.users.push(u);
-            }
-        }
-        for (const f of seed.files) {
-            if (
-                !globalThis.__mesMockDb.files.some(
-                    (existing) => existing.fileId === f.fileId,
-                )
-            ) {
-                globalThis.__mesMockDb.files.push(f);
-            }
-        }
     }
     return globalThis.__mesMockDb;
 }
