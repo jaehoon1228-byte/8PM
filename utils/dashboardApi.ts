@@ -251,8 +251,10 @@ export async function uploadSingleFile(
 
     const response = Array.isArray(rawResponse) ? rawResponse[0] : rawResponse;
 
+    
+
     if (!response?.fileData) {
-        throw new Error(response?.message || "파일 업로드에 실패했습니다.");
+        throw new Error(response?.message || "파일 업로드가 지연되고 있습니다.");
     }
     const converted = toUploadedFile(response.fileData, file.size);
     return {
