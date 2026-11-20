@@ -90,7 +90,15 @@ export default function LoginForm() {
 
             {loginFailed && <BadRequest />}
 
-            <Form action={handleSubmit} className="space-y-4">
+            <Form
+                action={handleSubmit}
+                onReset={() => {
+                    companycode.current = "";
+                    employeeId.current = "";
+                    password.current = "";
+                }}
+                className="space-y-4"
+            >
                 <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5 ml-1">
                         회사일련번호

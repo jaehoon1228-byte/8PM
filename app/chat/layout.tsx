@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import DashboardForm from "@/components/DashboardForm";
 import { getDashboardInitialData } from "@/utils/serverApi";
 
@@ -16,13 +16,14 @@ export default async function ChatLayout({
     const result = await getDashboardInitialData();
 
     if (result.status === "expired" || !result.data.userInfo) {
+        redirect("/login");
+    }
+    if (result.status === "ok" && !result.data.chatSessions) {
         notFound();
     }
-
     return (
         <main className="w-full h-screen">
             <DashboardForm initialData={result.data}>{children}</DashboardForm>
         </main>
     );
 }
-

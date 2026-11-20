@@ -179,7 +179,7 @@ export function useDashboardChat({
     );
 
     const handleDeleteChat = useCallback(
-        async (id: string, isActive: boolean) => {
+        async (id: string) => {
             const index = mergedSessionsRef.current.findIndex(
                 (c) => c.id === id,
             );
@@ -192,7 +192,9 @@ export function useDashboardChat({
             setChatSessions((prev) => prev.filter((c) => c.id !== id));
             useChatRuntimeStore.getState().clearRoomRuntime(id);
 
-            if (isActive) {
+            if (
+                window.location.pathname === `/chat/${encodeURIComponent(id)}`
+            ) {
                 router.replace("/chat");
             }
 

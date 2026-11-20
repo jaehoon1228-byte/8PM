@@ -29,13 +29,21 @@ export function nowMs(): number {
  * @throws {RangeError} 형식이 잘못된 경우
  */
 export function parseDateTime(value: string): Temporal.ZonedDateTime {
+    // value를 ZonedDateTime으로 해석 시도
     try {
         return Temporal.Instant.from(value).toZonedDateTimeISO(
             Temporal.Now.timeZoneId(),
         );
+    } catch {}
+
+    // 실패하면 PlainDateTime으로 해석 후 현재 시간대 부여
+    try {
+        return Temporal.PlainDateTime.from(value).toZonedDateTime(
+            Temporal.Now.timeZoneId(),
+        );
     } catch (error) {
-        if (!(error instanceof RangeError)) throw error;
-        return Temporal.ZonedDateTime.from(value);
+        // 그것조차 실패하면 예외를 던짐
+        throw error;
     }
 }
 

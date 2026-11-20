@@ -10,7 +10,6 @@ export default async function HomePage() {
 
     if (result.status !== "ok" || !result.data.userInfo) {
         redirect("/login");
-    } else {
-        redirect(getHomePath(result.data.userInfo.role));
     }
+    redirect(getHomePath(result.data.userInfo.role));
 }
