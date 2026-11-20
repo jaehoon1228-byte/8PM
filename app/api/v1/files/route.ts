@@ -176,7 +176,7 @@ export async function POST(request: Request) {
             }
         }
         const fileId = `${shared ? "shared" : "user"}-file-${nowMs()}-${Math.random().toString(36).slice(2, 7)}`;
-        const uploadedAt = Temporal.Now.plainDateTimeISO();
+        const uploadedAt = Temporal.Now.zonedDateTimeISO();
 
         // 텍스트/CSV 계열 파일이면 실제 내용을 일부 읽어 RAG 파싱 데이터로 보관
         let extractedText = "";

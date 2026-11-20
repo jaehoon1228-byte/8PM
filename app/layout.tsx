@@ -16,14 +16,14 @@ export default function RootLayout({
         <html
             lang="ko"
             suppressHydrationWarning
-            className={`font-sans h-full antialiased`}
+            className="font-sans h-full antialiased"
         >
             <head>
                 <link
                     rel="stylesheet"
                     as="style"
                     crossOrigin="anonymous"
-                    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+                    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov-dynamic-subset.min.css"
                 />
                 <script
                     dangerouslySetInnerHTML={{

@@ -87,7 +87,6 @@ export default function DashboardForm({
     // ---------------- 도메인 로직 훅 ----------------
     const {
         chatSessions,
-        activeChatId,
         newChatResetKey,
         replyBanner,
         setReplyBanner,
@@ -170,7 +169,6 @@ export default function DashboardForm({
 
                 <ChatSidebar
                     chatSessions={chatSessions}
-                    activeChatId={activeChatId}
                     onNewChat={handleNewChat}
                     onSelectChat={handleSelectChat}
                     onDeleteChat={handleDeleteChat}
