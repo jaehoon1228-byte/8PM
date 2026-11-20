@@ -20,7 +20,7 @@ export async function POST(request: Request) {
                 fileId,
                 originName,
                 fileType,
-                uploadedAt: Temporal.Now.plainDateTimeISO(),
+                uploadedAt: Temporal.Now.zonedDateTimeISO(),
             },
             parsedData: [],
         });

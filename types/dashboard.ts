@@ -1,7 +1,7 @@
 // =====================================================================
 // 메인(대시보드) 화면에서 사용하는 타입 정의
 //  - 백엔드(MES-AI-ChatBot-Web-BackEnd) 실제 DTO / Entity 와 1:1 매핑
-//  - UI 타입의 시간 필드는 Temporal.PlainDateTime 이며, DTO 의 시간 필드는 JSON 원형인 ISO 문자열
+//  - UI 타입의 시간 필드는 Temporal.ZonedDateTime 이며, DTO 의 시간 필드는 JSON 원형인 ISO 문자열
 // =====================================================================
 
 // ---------------------------- UI 타입 ----------------------------------
@@ -47,7 +47,7 @@ export interface UserInfo {
     /** 권한 코드 */
     role: UserRole | string;
     /** 계정 생성 일시 */
-    createdAt?: Temporal.PlainDateTime;
+    createdAt?: Temporal.ZonedDateTime;
 }
 
 /** 화면에서 사용하는 업로드 파일 메타데이터 */
@@ -57,7 +57,7 @@ export interface UploadedFile {
     /** 파일 표시 이름 (원본 파일명) */
     name: string;
     size: string;
-    uploadedAt?: Temporal.PlainDateTime;
+    uploadedAt?: Temporal.ZonedDateTime;
     employeeId?: number;
     companyId?: number;
     shared?: boolean;
@@ -65,7 +65,7 @@ export interface UploadedFile {
 
 /**
  * 서버(SSR)에서 미리 받아온 초기 데이터. null 이면 SSR 실패 → 클라이언트(CSR)에서 다시 요청
- *  - 서버 → 클라이언트 props 는 직렬화 가능해야 하므로 시간 필드는 ISO 문자열로 전달하고, 클라이언트에서 PlainDateTime 으로 복원
+ *  - 서버 → 클라이언트 props 는 직렬화 가능해야 하므로 시간 필드는 ISO 문자열로 전달하고, 클라이언트에서 ZonedDateTime 으로 복원
  */
 export interface DashboardInitialData {
     userInfo: (Omit<UserInfo, "createdAt"> & { createdAt?: string }) | null;

@@ -32,8 +32,8 @@ export interface MockFileRecord {
     fileType: string;
     /** 회사 공용 파일 여부 (true 면 공용, false 면 개인 파일) */
     shared: boolean;
-    /** 업로드 일시 (타임존 없는 PlainDateTime) */
-    uploadedAt: Temporal.PlainDateTime;
+    /** 업로드 일시 (ZonedDateTime) */
+    uploadedAt: Temporal.ZonedDateTime;
     /** 파일 크기 표시 문자열 (예: "2.4MB") */
     size: string;
     /** 파싱된 파일 본문 텍스트 (RAG 답변 근거로 사용) */
@@ -57,6 +57,17 @@ declare global {
 }
 
 /**
+ * 오프셋 없는 로컬 날짜/시각 문자열을 현재 타임존의 ZonedDateTime으로 변환합니다.
+ * @param value `2026-01-01T09:00:00` 형식의 문자열
+ * @returns 현재 타임존 기준 ZonedDateTime
+ */
+function toLocalZoned(value: string): Temporal.ZonedDateTime {
+    return Temporal.PlainDateTime.from(value).toZonedDateTime(
+        Temporal.Now.timeZoneId(),
+    );
+}
+
+/**
  * 시드 데이터로 채워진 초기 Mock DB를 생성합니다.
  * 회사 3곳(10, 20, 30)의 관리자/일반 사원 계정과 공용/개인 파일 샘플을 포함합니다.
  * @returns 초기 상태의 Mock DB 객체
@@ -72,7 +83,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "master.admin@mes-platform.com",
                 role: "ROLE_MASTER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-01-01T09:00:00"),
+                createdAt: toLocalZoned("2026-01-01T09:00:00"),
             },
             {
                 companyId: 10,
@@ -82,7 +93,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "gildong.hong@mes-factory.com",
                 role: "ROLE_MANAGER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-06-09T09:00:00"),
+                createdAt: toLocalZoned("2026-06-09T09:00:00"),
             },
             {
                 companyId: 10,
@@ -92,7 +103,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "chulsoo.kim@mes-factory.com",
                 role: "ROLE_USER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-07-12T10:30:00"),
+                createdAt: toLocalZoned("2026-07-12T10:30:00"),
             },
             {
                 companyId: 10,
@@ -102,7 +113,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "younghee.lee@mes-factory.com",
                 role: "ROLE_USER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-08-03T14:15:00"),
+                createdAt: toLocalZoned("2026-08-03T14:15:00"),
             },
             {
                 companyId: 10,
@@ -112,7 +123,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "minsoo.park@mes-factory.com",
                 role: "ROLE_USER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-09-20T11:00:00"),
+                createdAt: toLocalZoned("2026-09-20T11:00:00"),
             },
             {
                 companyId: 20,
@@ -122,7 +133,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "subin.jung@daehan-eng.com",
                 role: "ROLE_MANAGER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-05-10T09:00:00"),
+                createdAt: toLocalZoned("2026-05-10T09:00:00"),
             },
             {
                 companyId: 20,
@@ -132,7 +143,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "donghoon.choi@daehan-eng.com",
                 role: "ROLE_USER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-06-18T11:20:00"),
+                createdAt: toLocalZoned("2026-06-18T11:20:00"),
             },
             {
                 companyId: 30,
@@ -142,7 +153,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "jimin.han@mirae-semi.com",
                 role: "ROLE_MANAGER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-04-15T09:30:00"),
+                createdAt: toLocalZoned("2026-04-15T09:30:00"),
             },
             {
                 companyId: 30,
@@ -152,7 +163,7 @@ function createInitialMockDatabase(): MockDatabase {
                 email: "taeho.kang@mirae-semi.com",
                 role: "ROLE_USER",
                 password: "Password1!",
-                createdAt: Temporal.PlainDateTime.from("2026-07-22T15:10:00"),
+                createdAt: toLocalZoned("2026-07-22T15:10:00"),
             },
         ],
         files: [
@@ -163,7 +174,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "2026_전사_표준공정_가이드라인.pdf",
                 fileType: "pdf",
                 shared: true,
-                uploadedAt: Temporal.PlainDateTime.from("2026-10-01T09:00:00"),
+                uploadedAt: toLocalZoned("2026-10-01T09:00:00"),
                 size: "2.4MB",
                 parsedContent:
                     "전사 표준 공정 가이드라인: A라인 표준 온도는 185℃, B라인 표준 압력은 4.2bar이며 일일 정기 점검은 08:30에 실시합니다.",
@@ -175,7 +186,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "스마트팩토리_안전수칙_공용매뉴얼.docx",
                 fileType: "docx",
                 shared: true,
-                uploadedAt: Temporal.PlainDateTime.from("2026-10-15T13:20:00"),
+                uploadedAt: toLocalZoned("2026-10-15T13:20:00"),
                 size: "1.8MB",
                 parsedContent:
                     "전사 안전수칙 공용매뉴얼: 작업장 출입 시 안전모와 보호안경을 필수 착용하며 비상정지 스위치는 각 공정 제어반 우측에 위치합니다.",
@@ -187,7 +198,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "대한정밀_CNC가공_표준작업서.pdf",
                 fileType: "pdf",
                 shared: true,
-                uploadedAt: Temporal.PlainDateTime.from("2026-10-12T10:00:00"),
+                uploadedAt: toLocalZoned("2026-10-12T10:00:00"),
                 size: "3.1MB",
                 parsedContent:
                     "대한정밀 CNC 가공 표준작업서: 스핀들 회전수 4500RPM 기준, 절삭유 농도 6~8% 유지 필수.",
@@ -199,7 +210,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "미래반도체_클린룸_방진관리규정.xlsx",
                 fileType: "xlsx",
                 shared: true,
-                uploadedAt: Temporal.PlainDateTime.from("2026-10-20T09:30:00"),
+                uploadedAt: toLocalZoned("2026-10-20T09:30:00"),
                 size: "1.6MB",
                 parsedContent:
                     "미래반도체 클린룸 방진관리규정: Class 100 구역 온도 22±0.5℃, 습도 45±3% 유지.",
@@ -211,7 +222,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "김철수_1라인_일일점검표.xlsx",
                 fileType: "xlsx",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-01T10:15:00"),
+                uploadedAt: toLocalZoned("2026-11-01T10:15:00"),
                 size: "0.8MB",
                 parsedContent:
                     "1라인 일일점검표(김철수): 사출기 1호기 금형 온도 정상, 냉각수 유량 분당 18L 정상.",
@@ -223,7 +234,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "1라인_불량률_분석보고서.pdf",
                 fileType: "pdf",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-03T16:40:00"),
+                uploadedAt: toLocalZoned("2026-11-03T16:40:00"),
                 size: "1.5MB",
                 parsedContent:
                     "1라인 불량률 분석보고서(김철수): 10월 불량률 0.42%로 전월 대비 0.15%p 감소.",
@@ -235,7 +246,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "이영희_품질검사_체크리스트.csv",
                 fileType: "csv",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-04T11:20:00"),
+                uploadedAt: toLocalZoned("2026-11-04T11:20:00"),
                 size: "0.4MB",
                 parsedContent:
                     "품질검사 체크리스트(이영희): 외관 치수 오차 ±0.02mm 이내 합격 판정.",
@@ -247,7 +258,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "박민수_설비보전_작업이력서.docx",
                 fileType: "docx",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-05T14:50:00"),
+                uploadedAt: toLocalZoned("2026-11-05T14:50:00"),
                 size: "1.1MB",
                 parsedContent:
                     "설비보전 작업이력서(박민수): 컨베이어 벨트 장력 조정 및 베어링 윤활유 보충 완료.",
@@ -259,7 +270,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "최동훈_선반공정_측정기록부.xlsx",
                 fileType: "xlsx",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-02T13:10:00"),
+                uploadedAt: toLocalZoned("2026-11-02T13:10:00"),
                 size: "0.9MB",
                 parsedContent:
                     "선반공정 측정기록부(최동훈): 내경 공차 0.005mm 이내 전수 합격.",
@@ -271,7 +282,7 @@ function createInitialMockDatabase(): MockDatabase {
                 originName: "강태호_웨이퍼식각_로그데이터.csv",
                 fileType: "csv",
                 shared: false,
-                uploadedAt: Temporal.PlainDateTime.from("2026-11-06T16:00:00"),
+                uploadedAt: toLocalZoned("2026-11-06T16:00:00"),
                 size: "1.3MB",
                 parsedContent:
                     "웨이퍼식각 로그데이터(강태호): 플라즈마 챔버 진공도 15mTorr 안정 유지.",

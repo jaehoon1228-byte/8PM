@@ -49,13 +49,13 @@ export const ENDPOINTS = {
 
 /** 메시지/파일 표시용 시각 (HH:mm). 값이 없거나 잘못되면 현재 시각 */
 export function formatTime(
-    dateInput?: Temporal.PlainDateTime | string,
+    dateInput?: Temporal.ZonedDateTime | string,
 ): string {
     const dateTime =
         typeof dateInput === "string"
             ? parseOptionalDateTime(dateInput)
             : dateInput;
-    return (dateTime ?? Temporal.Now.plainDateTimeISO()).toLocaleString(
+    return (dateTime ?? Temporal.Now.zonedDateTimeISO()).toLocaleString(
         undefined,
         {
             hour: "2-digit",
@@ -73,7 +73,7 @@ export function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-/** UserController 응답(JSON 원형) → UI 사용자 정보 (생성일 문자열을 PlainDateTime 으로 변환) */
+/** UserController 응답(JSON 원형) → UI 사용자 정보 (생성일 문자열을 ZonedDateTime 으로 변환) */
 export const toUserInfo = (
     dto: Omit<UserInfo, "createdAt"> & { createdAt?: string },
 ): UserInfo => ({
@@ -81,7 +81,7 @@ export const toUserInfo = (
     createdAt: parseOptionalDateTime(dto.createdAt),
 });
 
-/** 서버 → 클라이언트 props 전달용 직렬화 (PlainDateTime → ISO 문자열) */
+/** 서버 → 클라이언트 props 전달용 직렬화 (ZonedDateTime → ISO 문자열) */
 export const serializeUploadedFile = (
     file: UploadedFile,
 ): Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string } => ({
@@ -89,7 +89,7 @@ export const serializeUploadedFile = (
     uploadedAt: file.uploadedAt?.toString(),
 });
 
-/** 클라이언트에서 props 복원 (ISO 문자열 → PlainDateTime) */
+/** 클라이언트에서 props 복원 (ISO 문자열 → ZonedDateTime) */
 export const reviveUploadedFile = (
     file: Omit<UploadedFile, "uploadedAt"> & { uploadedAt?: string },
 ): UploadedFile => ({

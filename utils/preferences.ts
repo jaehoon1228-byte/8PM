@@ -154,7 +154,7 @@ export function formatRoleLabel(role: string | undefined): string {
  * @param date 생성일자 (없으면 `-` 반환)
  * @returns 한국어 형식의 날짜 문자열
  */
-export function formatCreatedDate(date?: Temporal.PlainDateTime): string {
+export function formatCreatedDate(date?: Temporal.ZonedDateTime): string {
     if (!date) return "-";
     return date.toLocaleString("ko-KR", {
         year: "numeric",
@@ -170,7 +170,7 @@ export function recordLoginTimestamp(): void {
     if (typeof window === "undefined") return;
     usePreferenceStore
         .getState()
-        .setLastLoginAt(Temporal.Now.plainDateTimeISO());
+        .setLastLoginAt(Temporal.Now.zonedDateTimeISO());
 }
 
 /**
