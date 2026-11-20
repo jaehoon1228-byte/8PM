@@ -13,14 +13,14 @@ interface ChatSidebarProps {
     chatSessions: ChatSession[];
     onNewChat: () => void;
     onSelectChat: (id: string) => void;
-    onDeleteChat: (id: string, isActive: boolean) => void;
+    onDeleteChat: (id: string) => void;
 }
 
 interface ChatSessionItemProps {
     session: ChatSession;
     isActive: boolean;
     onSelect: (id: string) => void;
-    onDelete: (id: string, isActive: boolean) => void;
+    onDelete: (id: string) => void;
 }
 
 export default function ChatSidebar({
@@ -115,7 +115,7 @@ function ChatSessionItemBase({
                 type="button"
                 onClick={(e) => {
                     e.stopPropagation();
-                    onDelete(session.id, isActive);
+                    onDelete(session.id);
                 }}
                 className="opacity-70 group-hover:opacity-100 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all cursor-pointer shrink-0"
                 title="채팅방 삭제"

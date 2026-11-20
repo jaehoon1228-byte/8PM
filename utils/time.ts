@@ -34,7 +34,11 @@ export function parseDateTime(value: string): Temporal.ZonedDateTime {
         return Temporal.Instant.from(value).toZonedDateTimeISO(
             Temporal.Now.timeZoneId(),
         );
-    } catch {}
+    } catch (e) {
+        if (!(e instanceof RangeError)) {
+            throw e;
+        }
+    }
 
     // 실패하면 PlainDateTime으로 해석 후 현재 시간대 부여
     try {
