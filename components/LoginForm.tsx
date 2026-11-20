@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, IdCard, Lock } from "lucide-react";
 import ky from "ky";
@@ -17,9 +17,9 @@ import Form from "next/form";
 
 export default function LoginForm() {
     const router = useRouter();
-    const [employeeId, setEmployeeId] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
-    const [companycode, setCompanycode] = useState<string>("");
+    const employeeId = useRef<string>("");
+    const password = useRef<string>("");
+    const companycode = useRef<string>("");
     const [loginFailed, setLoginFailed] = useState(false);
 
     const handleSubmit = async () => {
@@ -28,23 +28,23 @@ export default function LoginForm() {
             refreshToken?: string;
         };
 
-        if (!companycode.trim()) {
+        if (!companycode.current.trim()) {
             alert("회사일련번호를 입력하세요.");
             return;
         }
-        if (!employeeId.trim()) {
+        if (!employeeId.current.trim()) {
             alert("사원번호를 입력하세요.");
             return;
         }
-        if (!password.trim()) {
+        if (!password.current.trim()) {
             alert("비밀번호를 입력하세요.");
             return;
         }
 
         const loginCredentials = {
-            companyId: Number(companycode.trim()),
-            employeeId: Number(employeeId.trim()),
-            password,
+            companyId: Number(companycode.current.trim()),
+            employeeId: Number(employeeId.current.trim()),
+            password: password.current,
         };
 
         const loginRequest = await ky.post(`/api/v1/login`, {
@@ -98,11 +98,12 @@ export default function LoginForm() {
                     <div className="relative flex items-center">
                         <Building2 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
                         <input
-                            type="text"
+                            type="number"
                             placeholder="회사일련번호 입력"
-                            value={companycode}
-                            onChange={(e) => setCompanycode(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
+                            onChange={(e) =>
+                                (companycode.current = e.target.value)
+                            }
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
                         />
                     </div>
                 </div>
@@ -114,11 +115,12 @@ export default function LoginForm() {
                     <div className="relative flex items-center">
                         <IdCard className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
                         <input
-                            type="text"
+                            type="number"
                             placeholder="사원번호 입력"
-                            value={employeeId}
-                            onChange={(e) => setEmployeeId(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
+                            onChange={(e) =>
+                                (employeeId.current = e.target.value)
+                            }
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
                         />
                     </div>
                 </div>
@@ -132,8 +134,9 @@ export default function LoginForm() {
                         <input
                             type="password"
                             placeholder="비밀번호 입력"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) =>
+                                (password.current = e.target.value)
+                            }
                             className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-indigo-500/15 text-sm font-medium transition-all"
                         />
                     </div>

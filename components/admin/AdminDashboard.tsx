@@ -382,7 +382,7 @@ export default function AdminDashboard({
 
     useEffect(() => {
         if (!isManagerOrAbove(userInfo.role)) {
-            router.replace("/");
+            router.replace("/chat");
             return;
         }
 
@@ -1002,7 +1002,7 @@ export default function AdminDashboard({
                     <div className="flex items-center gap-3 sm:gap-4">
                         <button
                             type="button"
-                            onClick={() => router.push("/")}
+                            onClick={() => router.push("/chat")}
                             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition cursor-pointer"
                             title="메인 대시보드로 돌아가기"
                         >

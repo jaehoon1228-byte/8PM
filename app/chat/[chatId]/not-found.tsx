@@ -17,7 +17,7 @@ export default function ChatRoomNotFound() {
                 요청하신 대화방이 삭제되었거나 접근 권한이 없습니다.
             </p>
             <Link
-                href="/"
+                href="/chat"
                 className="mt-6 inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition"
             >
                 새 채팅으로 돌아가기
