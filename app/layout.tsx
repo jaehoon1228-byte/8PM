@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getReactDevtoolsRegisterScript } from "@/utils/getReactDevtoolsRegisterScript";
 
 export const metadata: Metadata = {
     title: "MES AI ChatBot",
@@ -16,14 +17,22 @@ export default function RootLayout({
         <html
             lang="ko"
             suppressHydrationWarning
-            className="font-sans h-full antialiased"
+            className={`font-sans h-full antialiased`}
         >
             <head>
+                {/* React DevTools 스크립트 등록 */}
+                {process.env.NODE_ENV === "development" && (
+                    <script
+                        dangerouslySetInnerHTML={{
+                            __html: getReactDevtoolsRegisterScript(),
+                        }}
+                    />
+                )}
                 <link
                     rel="stylesheet"
                     as="style"
                     crossOrigin="anonymous"
-                    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov-dynamic-subset.min.css"
+                    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
                 />
                 <script
                     dangerouslySetInnerHTML={{
