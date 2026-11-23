@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getReactDevtoolsRegisterScript } from "@/utils/getReactDevtoolsRegisterScript";
 
 export const metadata: Metadata = {
     title: "MES AI ChatBot",
@@ -19,6 +20,14 @@ export default function RootLayout({
             className={`font-sans h-full antialiased`}
         >
             <head>
+                {/* React DevTools 스크립트 등록 */}
+                {process.env.NODE_ENV === "development" && (
+                    <script
+                        dangerouslySetInnerHTML={{
+                            __html: getReactDevtoolsRegisterScript(),
+                        }}
+                    />
+                )}
                 <link
                     rel="stylesheet"
                     as="style"
