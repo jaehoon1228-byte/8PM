@@ -69,6 +69,6 @@ export async function DELETE(
     return NextResponse.json({
         fileId,
         message: "파일이 성공적으로 삭제되었습니다.",
-        deletedAt: Temporal.Now.plainDateTimeISO(),
+        deletedAt: Temporal.Now.zonedDateTimeISO(),
     });
 }

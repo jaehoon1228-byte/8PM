@@ -9,7 +9,7 @@ export async function GET(
     const { sessionId } = await context.params;
     console.log(`[Mock API] 과거 대화 내역 조회 (${sessionId})`);
 
-    const now = Temporal.Now.plainDateTimeISO();
+    const now = Temporal.Now.zonedDateTimeISO();
     return NextResponse.json([
         {
             chatId: "hist-1-" + sessionId,

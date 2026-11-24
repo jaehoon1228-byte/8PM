@@ -20,7 +20,7 @@ export default function SettingsPageClient({
         <div className="min-h-screen bg-linear-to-br from-slate-100 via-indigo-50/50 to-slate-200 dark:from-[#090d16] dark:via-[#0f172a] dark:to-[#090d16]">
             <SettingsModal
                 isOpen
-                onClose={() => router.push("/")}
+                onClose={() => router.push("/chat")}
                 userInfo={userInfo}
             />
         </div>

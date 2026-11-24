@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { ChatSession } from "@/types/dashboard";
 import { deleteChatSession, fetchChatSessions } from "@/utils/dashboardApi";
 import { useChatRuntimeStore } from "@/utils/store/chatRuntimeStore";
@@ -23,7 +23,7 @@ interface UseDashboardChatOptions {
 
 /**
  * 대시보드 좌측 사이드바의 채팅방 목록 메타데이터(`id`, `title`),
- * 라우트 이동(`/`, `/chat/[chatId]`), 채팅방 삭제 및 로컬 스토리지 동기화를 관리하는 훅입니다.
+ * 라우트 이동(`/chat`, `/chat/[chatId]`), 채팅방 삭제 및 로컬 스토리지 동기화를 관리하는 훅입니다.
  * 개별 채팅방의 대화 내역은 각 `/chat/[chatId]` 경로에서 단독 조회합니다.
  */
 export function useDashboardChat({
@@ -33,9 +33,6 @@ export function useDashboardChat({
     handleApiError,
 }: UseDashboardChatOptions) {
     const router = useRouter();
-    const params = useParams<{ chatId?: string }>();
-    const activeChatId =
-        typeof params.chatId === "string" ? params.chatId : null;
 
     const [chatSessions, setChatSessions] =
         useState<ChatSession[]>(initialSessions);
@@ -170,7 +167,7 @@ export function useDashboardChat({
 
     const handleNewChat = useCallback(() => {
         setNewChatResetKey((prev) => prev + 1);
-        router.push("/");
+        router.push("/chat");
     }, [router]);
 
     const handleSelectChat = useCallback(
@@ -195,8 +192,10 @@ export function useDashboardChat({
             setChatSessions((prev) => prev.filter((c) => c.id !== id));
             useChatRuntimeStore.getState().clearRoomRuntime(id);
 
-            if (activeChatId === id) {
-                router.replace("/");
+            if (
+                window.location.pathname === `/chat/${encodeURIComponent(id)}`
+            ) {
+                router.replace("/chat");
             }
 
             try {
@@ -215,21 +214,20 @@ export function useDashboardChat({
                 );
             }
         },
-        [activeChatId, handleApiError, router],
+        [handleApiError, router],
     );
 
     const clearChatState = useCallback(() => {
         skipNextPersistRef.current = true;
         setChatSessions([]);
         useChatRuntimeStore.getState().resetRuntime();
-        if (activeChatId !== null) {
-            router.replace("/");
+        if (window.location.pathname.startsWith("/chat/")) {
+            router.replace("/chat");
         }
-    }, [activeChatId, router]);
+    }, [router]);
 
     return {
         chatSessions: mergedSessions,
-        activeChatId,
         newChatResetKey,
         replyBanner,
         setReplyBanner,

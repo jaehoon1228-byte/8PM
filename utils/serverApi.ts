@@ -6,7 +6,6 @@
 //  - next/headers 를 사용하므로 클라이언트 컴포넌트에서 import 하면 빌드 에러가 납니다.
 // =====================================================================
 import ky, { isHTTPError, type KyInstance } from "ky";
-import { cookies } from "next/headers";
 import type {
     AdminInitialData,
     ChatHistoryDto,
@@ -25,9 +24,7 @@ import {
     toUploadedFile,
 } from "@/utils/endpoints";
 import { isManagerOrAbove } from "@/utils/role";
-
-// 컨테이너 내부망 주소가 따로 있다면 BACKEND_INTERNAL_HOST 로 지정 (없으면 공개 주소 사용)
-const serverBaseUrl = process.env.BACKEND_INTERNAL_HOST ?? BACKEND_BASE_URL;
+import { cookies } from "next/headers";
 
 /** SSR 인증 결과: 미인증·세션 만료 / 성공 */
 type ServerAuth = { status: "expired" } | { status: "ok"; client: KyInstance };
@@ -44,23 +41,27 @@ async function createServerApi(): Promise<ServerAuth> {
     if (!refreshToken) return { status: "expired" };
 
     // JWTController: @PostMapping("/api/v1/jwt/refresh") @CookieValue("refreshToken")
-    const refreshResponse = await ky.post(serverBaseUrl + ENDPOINTS.refresh, {
-        headers: { Cookie: `refreshToken=${refreshToken}` },
-        throwHttpErrors: false,
-        cache: "no-store",
-        timeout: 5000,
-    });
+    const refreshResponse = await ky.post(
+        BACKEND_BASE_URL + ENDPOINTS.refresh,
+        {
+            headers: { Cookie: `refreshToken=${refreshToken}` },
+            throwHttpErrors: false,
+            cache: "no-store",
+        },
+    );
 
     const accessToken = refreshResponse.headers.get("Authorization");
     if (!refreshResponse.ok || !accessToken) {
+        console.warn(
+            `[SSR] ${refreshResponse.status}: ${refreshResponse.statusText}`,
+        );
         return { status: "expired" };
     }
 
     const client = ky.create({
-        baseUrl: serverBaseUrl,
+        baseUrl: BACKEND_BASE_URL,
         headers: { Authorization: accessToken },
         cache: "no-store", // 사용자별 데이터이므로 캐시 금지
-        timeout: 5000, // SSR 이 백엔드 지연으로 무한 대기하지 않도록 제한
         retry: 0,
     });
 
@@ -91,6 +92,7 @@ async function safe<T>(
                     error.response.status === 403 ||
                     error.response.status === 405)
             ) {
+                console.warn(`[SSR] ${error}`);
                 return null;
             }
             console.error(`[SSR] ${label} 조회 실패:`, error.response.status);

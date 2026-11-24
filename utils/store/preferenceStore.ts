@@ -14,8 +14,8 @@ interface PreferenceState {
     theme: ThemeMode;
     /** 푸시 알림 사용 여부 */
     notifications: boolean;
-    /** 마지막 로그인 시각 (타임존 없는 PlainDateTime) */
-    lastLoginAt: Temporal.PlainDateTime | null;
+    /** 마지막 로그인 시각 (타임존 포함 ZonedDateTime) */
+    lastLoginAt: Temporal.ZonedDateTime | null;
     /**
      * 테마를 변경합니다.
      * @param theme 적용할 테마
@@ -30,10 +30,10 @@ interface PreferenceState {
      * 마지막 로그인 시각을 저장합니다.
      * @param dateTime 로그인 시각
      */
-    setLastLoginAt: (dateTime: Temporal.PlainDateTime) => void;
+    setLastLoginAt: (dateTime: Temporal.ZonedDateTime) => void;
 }
 
-/** localStorage 저장 포맷 (PlainDateTime 은 ISO 문자열로 저장) */
+/** localStorage 저장 포맷 (ZonedDateTime 은 ISO 문자열로 저장) */
 interface PersistedPreferenceState {
     theme: ThemeMode;
     notifications: boolean;

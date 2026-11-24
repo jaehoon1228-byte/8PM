@@ -14,6 +14,6 @@ export async function POST(request: Request) {
         companyId: 10,
         employeeId: 20260041,
         sessionTitle: title,
-        createdAt: Temporal.Now.plainDateTimeISO(),
+        createdAt: Temporal.Now.zonedDateTimeISO(),
     });
 }

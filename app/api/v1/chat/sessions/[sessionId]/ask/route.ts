@@ -58,7 +58,7 @@ export async function POST(
         employeeId: currentUser.employeeId,
         sessionId,
         message: mockAiAnswer,
-        recordedAt: Temporal.Now.plainDateTimeISO(),
+        recordedAt: Temporal.Now.zonedDateTimeISO(),
         role: "assistant",
     });
 }

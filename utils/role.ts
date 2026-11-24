@@ -12,3 +12,16 @@ export function isManagerOrAbove(role?: string): boolean {
         upper.includes("MANEGER")
     );
 }
+
+/**
+ * 로그인한 사용자가 진입해야 할 홈 경로를 반환합니다.
+ * 역할별로 다른 페이지로 보내야 할 경우 이 함수만 수정합니다.
+ * @param role 권한 문자열 (예: ROLE_USER, ROLE_MANAGER)
+ * @returns 홈 경로 (현재는 모든 역할이 `/chat`)
+ */
+export function getHomePath(role?: string): string {
+    // linter 경고 방지
+    void role;
+    return "/chat";
+}
+
