@@ -58,7 +58,6 @@ import type {
     UploadedFile,
     UserInfo,
 } from "@/types/dashboard";
-import { title } from "node:process";
 
 interface DashboardFormProps {
     initialData?: DashboardInitialData;
@@ -559,6 +558,7 @@ export default function DashboardForm({
 
                         setChatSessions((prev) => {
                             const exists = prev.some((c) => c.id === currentId);
+                            
                             if (!exists) {
                                 return [{
                                     id: currentId,

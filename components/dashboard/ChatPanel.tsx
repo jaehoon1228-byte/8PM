@@ -8,7 +8,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bot, Paperclip, Send, User } from "lucide-react";
-import type { ChatSession } from "@/types/dashboard";
+import type { ChartDataPoint, ChatSession } from "@/types/dashboard";
+import { parseGraphDataFromText } from "@/utils/parseGraphData";
 import {
     BarChart,
     Bar,
@@ -133,6 +134,11 @@ export default function ChatPanel({
                     )}
                     {currentChat.messages.map((msg) => {
                         const isUser = msg.sender === "user";
+                        const parsed = !isUser ?parseGraphDataFromText(msg.text) 
+                            :{cleanText: msg.text, chartData: [] as ChartDataPoint[]};
+                        const resolvedChartData = msg.chartData && msg.chartData.length > 0 ? msg.chartData : parsed.chartData;
+                        const displayText = !isUser && parsed.chartData.length > 0 ? parsed.cleanText : msg.text;
+                        
                         return (
                             <div
                                 key={msg.id}
@@ -166,19 +172,19 @@ export default function ChatPanel({
                                                 : "bg-slate-100/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200/70 dark:border-slate-700/70"
                                         }`}
                                     >
-                                        {msg.text}
+                                        {displayText}
 
-                                        {msg.chartData && msg.chartData.length > 0 && (
+                                        {resolvedChartData.length > 0 && (
                                             <div className="mt-4 w-full h-60 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={msg.chartData} margin={{top:5, right:10, left:-20, bottom:0}}>
+                                                    <BarChart data={resolvedChartData} margin={{top:5, right:10, left:-20, bottom:0}}>
                                                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                                                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                                                        <XAxis dataKey="x" tick={{ fontSize: 11 }} />
                                                         <YAxis tick={{ fontSize: 11 }} />
                                                         <Tooltip 
                                                             contentStyle={{ backgroundColor: "#1f2937", color: "#fff", borderRadius: "8px", fontSize: "12px" }}
                                                         />
-                                                        <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                                        <Bar dataKey="y" fill="#6366f1" radius={[4, 4, 0, 0]} />
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
